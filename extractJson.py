@@ -1,21 +1,4 @@
-import json
-import sys
-import logging
-
-
-# logger
-LOG_LEVEL = 20  # INFO
-LOG_FILE = 'myapp.log'
-
-# transcription json file
-STR_DIALOG_TURNS_LIST = 'dialog_turns_list'
-STR_MINI_DIALOG_TURN_LIST = 'mini_dialog_turn_list'
-STR_PLAIN_TEXT = 'plainText'
-
-# extracting plain text
-PLAIN_TEXT_FILE_PATH = '/tmp/plainText.txt'
-PLAIN_TEXT_DETAILS_FILE_PATH = '/tmp/plainTextOrder.txt'
-
+from configService import *
 
 
 def usage():
@@ -28,20 +11,6 @@ def initFiles():
     f_plain_text_details = open(PLAIN_TEXT_DETAILS_FILE_PATH, 'w')
 
     return f_plain_text, f_plain_text_details
-
-
-def initLogger():
-    logging.basicConfig(filename=LOG_FILE, level=LOG_LEVEL)
-    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-    rootLogger = logging.getLogger()
-
-    fileHandler = logging.FileHandler(LOG_FILE)
-    fileHandler.setFormatter(logFormatter)
-    rootLogger.addHandler(fileHandler)
-
-    consoleHandler = logging.StreamHandler()
-    consoleHandler.setFormatter(logFormatter)
-    rootLogger.addHandler(consoleHandler)
 
 
 def cleanWS(f_plain_text, f_plain_text_details):
@@ -104,6 +73,5 @@ if __name__ == '__main__':
         logging.info('Source json file was loaded')
 
     extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details)
-
 
     cleanWS(f_plain_text, f_plain_text_details)
