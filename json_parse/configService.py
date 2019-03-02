@@ -1,3 +1,12 @@
+import json
+import sys
+import logging
+import re
+
+from json_parse.loggerService import initLogger
+from json_parse.loggerService import LOG_FILE
+
+
 # Transcription json file
 STR_DIALOG_TURNS_LIST = 'dialog_turns_list'
 STR_MINI_DIALOG_TURN_LIST = 'mini_dialog_turn_list'
