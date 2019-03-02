@@ -1,0 +1,9 @@
+The main script is 'parseTransDir.sh'
+$ ./parseTransDir.sh <src_dir> <target_dir>
+<src_dir> - input dir including pure json files
+<target_dir> - input dir including the same json files as the input and in addition 3 more attributes:
+	1. parsing by word
+	2. parsing by lemma
+	3. parsing by pos
+
+

@@ -1,4 +1,4 @@
-from configService import *
+from json_parse.configService import *
 
 
 def initFiles():
