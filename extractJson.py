@@ -39,7 +39,7 @@ def extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details):
     dialog_turns_list = src_json_data[STR_DIALOG_TURNS_LIST]
     dialog_turns_list_len = len(dialog_turns_list)
     for dialog_turn_i in range(dialog_turns_list_len):
-        logging.info("Processing {0}/{1}".format(dialog_turn_i, dialog_turns_list_len-1))
+        logging.debug("Processing {0}/{1}".format(dialog_turn_i, dialog_turns_list_len-1))
         dialog_turn = dialog_turns_list[dialog_turn_i]
         mini_dialog_turn_list = dialog_turn[STR_MINI_DIALOG_TURN_LIST]
         mini_dialog_turn_list_len = len(mini_dialog_turn_list)
