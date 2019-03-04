@@ -3,7 +3,7 @@
 
 if [ "$#" -ne 3 ]; then
     echo "Illegal number of parameters"
-    echo ./$(basename $0) "<parser_type ('yoav' or 'reut')> <src_json_dir> <target_json_dir>"
+    echo ./$(basename $0) "<parser_type> <src_json_dir> <target_json_dir>"
     exit 1
 fi
 

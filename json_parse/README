@@ -1,5 +1,6 @@
 The main script is 'parseTransDir.sh'
-$ ./parseTransDir.sh <src_dir> <target_dir>
+$ ./parseTransDir.sh "<parser_type> <src_dir> <target_dir>
+<parser_type> - 'yoav' for Yoav's/Adler parser, 'reut' for Reut's parser
 <src_dir> - input dir including pure json files
 <target_dir> - input dir including the same json files as the input and in addition 3 more attributes:
 	1. parsing by word
