@@ -8,26 +8,34 @@ def initFiles():
     logging.FileHandler(filename=LOG_FILE, mode='w')
     f_plain_text = open(PLAIN_TEXT_FILE_PATH, 'w')
     f_plain_text_details = open(PLAIN_TEXT_DETAILS_FILE_PATH, 'w')
+    f_plain_text_word_splited = open(PLAIN_TEXT_WORD_SPLITED_FILE_PATH, 'w')
 
-    return f_plain_text, f_plain_text_details
+    return f_plain_text, f_plain_text_details, f_plain_text_word_splited
 
 
-def cleanWS(f_plain_text, f_plain_text_details):
+def cleanWS(f_plain_text, f_plain_text_details, f_plain_text_word_splited):
     f_plain_text.close()
     f_plain_text_details.close()
+    f_plain_text_word_splited.close()
 
 
 def processText(plain_text):
     return plain_text
 
 
-def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details):
+def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details, f_plain_text_word_splited):
     f_plain_text.write(processed_plain_text + '\n')
+
     details = "{0}:{1} {2}:{3}".format(STR_DIALOG_TURNS_LIST, dialog_turn_i, STR_MINI_DIALOG_TURN_LIST, mini_dialog_turn_i)
     f_plain_text_details.write(details + '\n')
 
+    processed_plain_text_list = processed_plain_text.split()
+    for item in processed_plain_text_list:
+        f_plain_text_word_splited.write("%s\n" % item)
+    f_plain_text_word_splited.write('\n')
 
-def extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details):
+
+def extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details, f_plain_text_word_splited):
     '''
     extracting every plainText attr. (with its json location details) to appropriate files
     :param src_json_data:
@@ -46,7 +54,7 @@ def extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details):
             mini_dialog_turn = mini_dialog_turn_list[mini_dialog_turn_i]
             plain_text = mini_dialog_turn[STR_PLAIN_TEXT]
             processed_plain_text = processText(plain_text)
-            write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details)
+            write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details, f_plain_text_word_splited)
     logging.info("All dialogs extracted")
 
 
@@ -55,11 +63,12 @@ if __name__ == '__main__':
     # That script extracts:                                                      #
     # plain texts to PLAIN_TEXT_FILE_PATH and                                    #
     # plain texts details to PLAIN_TEXT_DETAILS_FILE_PATH                        #
+    # plain texts (each word on a new line) to PLAIN_TEXT_WORD_SPLITED_FILE_PATH #
     # each on those files are built of one plain text (and one details) per line #
     # line number of plain text is represented by line number of details         #
     ##############################################################################
 
-    f_plain_text, f_plain_text_details = initFiles()
+    f_plain_text, f_plain_text_details, f_plain_text_word_splited = initFiles()
     initLogger()
 
     if len(sys.argv) > 1:
@@ -71,6 +80,6 @@ if __name__ == '__main__':
         src_json_data = json.load(f)
         logging.info('Source json file was loaded')
 
-    extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details)
+    extractPlainTextDetails(src_json_data, f_plain_text, f_plain_text_details, f_plain_text_word_splited)
 
-    cleanWS(f_plain_text, f_plain_text_details)
+    cleanWS(f_plain_text, f_plain_text_details, f_plain_text_word_splited)

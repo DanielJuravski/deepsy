@@ -14,8 +14,9 @@ STR_PLAIN_TEXT = 'plainText'
 
 # Extracting plain text
 PLAIN_TEXT_FILE_PATH = '/tmp/plainText.txt'
-PLAIN_TEXT_DETAILS_FILE_PATH = '/tmp/plainTextOrder.txt'
+PLAIN_TEXT_DETAILS_FILE_PATH = '/tmp/plainTextDetails.txt'
 PLAIN_TEXT_PARSED_FILE_PATH = '/tmp/plainTextParsed.txt'
+PLAIN_TEXT_WORD_SPLITED_FILE_PATH = '/tmp/plainTextWordSplited.txt'
 
 # Json
 PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
