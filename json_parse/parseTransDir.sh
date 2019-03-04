@@ -9,17 +9,22 @@ fi
 
 SRC_DIR=$1
 TARGET_DIR=$2
+JSON_PARESE_DIR=~/deepsy/json_parse
+YOAV_PARSER=~/HE_Parsers/yoav/hebdepparser
+
+rm -rf $TARGET_DIR
+mkdir -p $TARGET_DIR
 
 find  $SRC_DIR -type f | while read file; do
   echo Parsing $file
 
-  python3 extractJson.py $file
+  python3 $JSON_PARESE_DIR/extractJson.py $file
 
-  python ~/HE_Parsers/yoav/hebdepparser/parse.py < /tmp/plainText.txt > /tmp/plainTextParsed.txt
+  python $YOAV_PARSER/parse.py < /tmp/plainText.txt > /tmp/plainTextParsed.txt
 
   just_file_name=$(basename $file)
   output_file=${TARGET_DIR}/${just_file_name}.parsed
-  python3 addAttrJson.py $file $output_file
+  python3 $JSON_PARESE_DIR/addAttrJson.py $file $output_file
 
   echo $output_file was created
 

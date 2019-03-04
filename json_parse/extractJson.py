@@ -1,5 +1,4 @@
-from json_parse.configService import *
-
+from configService import *
 
 def usage():
     print("USAGE")
@@ -66,7 +65,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         json_src_file_name = sys.argv[1]
     else:
-        json_src_file_name = 'trans_sample.json'
+        json_src_file_name = 'json_parse/trans_sample.json'
 
     with open(json_src_file_name) as f:
         src_json_data = json.load(f)

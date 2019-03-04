@@ -3,8 +3,8 @@ import sys
 import logging
 import re
 
-from json_parse.loggerService import initLogger
-from json_parse.loggerService import LOG_FILE
+from loggerService import initLogger
+from loggerService import LOG_FILE
 
 
 # Transcription json file

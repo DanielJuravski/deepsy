@@ -1,4 +1,4 @@
-from json_parse.configService import *
+from configService import *
 
 
 def initFiles():
@@ -116,8 +116,8 @@ if __name__ == '__main__':
         json_src_file_name = sys.argv[1]
         json_target_file_name = sys.argv[2]
     else:
-        json_src_file_name = 'trans_sample.json'
-        json_target_file_name = 'trans_parsed_sample.json'
+        json_src_file_name = 'json_parse/trans_sample.json'
+        json_target_file_name = 'json_parse/trans_parsed_sample.json'
 
     f_plain_text_parsed, f_plain_text_details = initFiles()
 
