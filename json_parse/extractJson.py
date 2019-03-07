@@ -23,15 +23,53 @@ def processText(plain_text):
     return plain_text
 
 
+def removePunc(item):
+    # that method removes punctuation (partially) from the end of each word, for Reut's parser
+    # extracting long punc (...) need to be before short punc (.)
+    # insure that there is a word near that punc (not just punc with spaces). do this to avoid spliting single punc to 2 items.
+    no_punc_word_list = []
+
+    # remove '...'
+    if (item[-3:] == '...') and len(item)>3:
+        word = item[:-3]
+        punc = item[-3:]
+        no_punc_word_list.append(word)
+        no_punc_word_list.append(punc)
+
+    # remove '..'
+    elif (item[-2:] == '..') and len(item)>2:
+        word = item[:-2]
+        punc = item[-2:]
+        no_punc_word_list.append(word)
+        no_punc_word_list.append(punc)
+
+    # remove .,?!
+    elif (item[-1] == '.' or item[-1] == ',' or item[-1] == '?' or item[-1] == '!') and len(item)>1:
+        word = item[:-1]
+        punc = item[-1]
+        no_punc_word_list.append(word)
+        no_punc_word_list.append(punc)
+
+    else:
+        no_punc_word_list.append(item)
+
+    return no_punc_word_list
+
+
 def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details, f_plain_text_word_splited):
+    # write plain text
     f_plain_text.write(processed_plain_text + '\n')
 
+    # write plain text details
     details = "{0}:{1} {2}:{3}".format(STR_DIALOG_TURNS_LIST, dialog_turn_i, STR_MINI_DIALOG_TURN_LIST, mini_dialog_turn_i)
     f_plain_text_details.write(details + '\n')
 
+    # write plain text splited
     processed_plain_text_list = processed_plain_text.split()
-    for item in processed_plain_text_list:
-        f_plain_text_word_splited.write("%s\n" % item)
+    for word in processed_plain_text_list:
+        no_punc_word_list = removePunc(word)
+        for processed_word in no_punc_word_list:
+            f_plain_text_word_splited.write("%s\n" % processed_word)
     f_plain_text_word_splited.write('\n')
 
 

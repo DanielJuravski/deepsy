@@ -4,8 +4,11 @@ from configService import *
 def initFiles():
     f_plain_text_parsed = open(PLAIN_TEXT_PARSED_FILE_PATH, 'r')
     f_plain_text_details = open(PLAIN_TEXT_DETAILS_FILE_PATH, 'r')
+    f_plain_text = open(PLAIN_TEXT_FILE_PATH, 'r')
+
     logging.info('plain text parsed and details were loaded')
-    return f_plain_text_parsed, f_plain_text_details
+
+    return f_plain_text_parsed, f_plain_text_details, f_plain_text
 
 
 def addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, f_plain_text_details):
@@ -72,7 +75,7 @@ def processPlainTextParsed(f_plain_text_parsed):
     return all_word_sen, all_lemma_sen, all_pos_sen
 
 
-def verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, f_plain_text_details):
+def verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, f_plain_text_details, f_plain_text):
     f_plain_text_details_len = sum(1 for line in f_plain_text_details)
 
     all_word_sen_len = len(all_word_sen)
@@ -119,10 +122,10 @@ if __name__ == '__main__':
         json_src_file_name = 'json_parse/trans_sample.json'
         json_target_file_name = 'json_parse/trans_parsed_sample.json'
 
-    f_plain_text_parsed, f_plain_text_details = initFiles()
+    f_plain_text_parsed, f_plain_text_details, f_plain_text = initFiles()
 
     all_word_sen, all_lemma_sen, all_pos_sen = processPlainTextParsed(f_plain_text_parsed)
-    verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, f_plain_text_details)
+    verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, f_plain_text_details, f_plain_text)
 
     with open(json_src_file_name) as f:
         src_json_data = json.load(f)
