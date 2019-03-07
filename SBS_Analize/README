@@ -1,0 +1,10 @@
+how to run:
+python3.6 ors.py --file <SBS_file_name> --sheet <sheet_name> --output <statistics_output_file_name>
+
+That script loads the xlsx,
+calculates for every client his RCI.
+RCI is diff of (3 first sessions ors avg) and (3 last sessions ors avg).
+
+If the ORS value is null, skip to the next session.
+If client has les then 3 sessions, RCI is 'N/A'.
+
