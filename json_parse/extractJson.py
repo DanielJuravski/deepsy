@@ -5,7 +5,6 @@ def usage():
 
 
 def initFiles():
-    logging.FileHandler(filename=LOG_FILE, mode='w')
     f_plain_text = open(PLAIN_TEXT_FILE_PATH, 'w')
     f_plain_text_details = open(PLAIN_TEXT_DETAILS_FILE_PATH, 'w')
     f_plain_text_word_splited = open(PLAIN_TEXT_WORD_SPLITED_FILE_PATH, 'w')

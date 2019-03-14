@@ -14,6 +14,13 @@ JSON_PARSE_DIR=~/deepsy/json_parse
 YOAV_PARSER=~/HE_Parsers/yoav/hebdepparser
 REUT_PARSER=~/HE_Parsers/reut/yapproj
 
+
+# logger
+LOG_FILE=${TARGET_DIR}/parse.log
+exec > >(while read -r line; do printf '%s\n' "$line" | tee -a $LOG_FILE; done)
+exec 2> >(while read -r line; do printf '%s\n' "$line" | tee -a $LOG_FILE; done >&2)
+
+
 rm -rf $TARGET_DIR
 mkdir -p $TARGET_DIR
 
