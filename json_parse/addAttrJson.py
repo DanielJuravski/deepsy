@@ -142,6 +142,7 @@ if __name__ == '__main__':
     #  - parsing by word                                                         #
     #  - parsing by lemma                                                        #
     #  - parsing by pos                                                          #
+    #  - parsing by morphology                                                   #
     ##############################################################################
 
     initLogger()
