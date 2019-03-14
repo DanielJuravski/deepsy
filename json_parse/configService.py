@@ -22,8 +22,10 @@ PLAIN_TEXT_WORD_SPLITED_FILE_PATH = '/tmp/plainTextWordSplited.txt'
 PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
 PLAIN_TEXT_PARSED_LEMMA = 'plainText_parsed_lemma'
 PLAIN_TEXT_PARSED_POS = 'plainText_parsed_pos'
+PLAIN_TEXT_PARSED_MORPH = 'plainText_parsed_morphological'
 
 # Conll
 WORD_i = 1
 LEMMA_i = 2
 POS_i = 3
+MORPHOLOGICAL_i = 5
