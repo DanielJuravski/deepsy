@@ -34,7 +34,7 @@ def addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_mo
 
         src_json_data[STR_DIALOG_TURNS_LIST][dialog_turn_list_i] \
             [STR_MINI_DIALOG_TURN_LIST][mini_dialog_turn_list_i] \
-            [PLAIN_TEXT_PARSED_POS] = morph_sen
+            [PLAIN_TEXT_PARSED_MORPH] = morph_sen
 
     logging.info('New attributes were added to data')
 
