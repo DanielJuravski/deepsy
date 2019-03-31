@@ -22,7 +22,7 @@ def processText(plain_text):
     return plain_text
 
 
-def removePunc(item):
+def removeSuffixPunc(item):
     # that method removes punctuation (partially) from the end of each word, for Reut's parser
     # extracting long punc (...) need to be before short punc (.)
     # insure that there is a word near that punc (not just punc with spaces). do this to avoid spliting single punc to 2 items.
@@ -55,6 +55,20 @@ def removePunc(item):
     return no_punc_word_list
 
 
+def removeParenthesis(word):
+    # by the transcripts guidelines, there is a use of some symbols for make the text reacher.
+    # we need to remove that when it comes to parsing
+    fixed_word = word.translate(str.maketrans('', '', '<>()'))
+
+    return fixed_word
+
+
+def removePunc(word):
+    fixed_word = word.translate(str.maketrans('','',string.punctuation))
+
+    return fixed_word
+
+
 def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain_text, f_plain_text_details, f_plain_text_word_splited):
     # write plain text
     f_plain_text.write(processed_plain_text + '\n')
@@ -66,9 +80,12 @@ def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain
     # write plain text splited
     processed_plain_text_list = processed_plain_text.split()
     for word in processed_plain_text_list:
-        no_punc_word_list = removePunc(word)
-        for processed_word in no_punc_word_list:
-            f_plain_text_word_splited.write("%s\n" % processed_word)
+        #fixed_word = removeParenthesis(word)
+        fixed_word = removePunc(word)
+        #no_punc_word_list = removeSuffixPunc(fixed_word)
+        # for processed_word in no_punc_word_list:
+        #     f_plain_text_word_splited.write("%s\n" % processed_word)
+        f_plain_text_word_splited.write("%s\n" % fixed_word)
     f_plain_text_word_splited.write('\n')
 
 
