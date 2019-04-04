@@ -24,6 +24,7 @@ PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
 PLAIN_TEXT_PARSED_LEMMA = 'plainText_parsed_lemma'
 PLAIN_TEXT_PARSED_POS = 'plainText_parsed_pos'
 PLAIN_TEXT_PARSED_MORPH = 'plainText_parsed_morphological'
+PLAIN_TEXT_PARSING_RESULTS = 'plainText_parsing_results'
 
 # Conll
 WORD_i = 1

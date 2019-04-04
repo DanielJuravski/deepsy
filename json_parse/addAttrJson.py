@@ -11,11 +11,12 @@ def initFiles():
     return f_plain_text_parsed, f_plain_text_details, f_plain_text
 
 
-def addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plain_text_details):
+def addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen, f_plain_text_details):
     # set seek 0 because file was iterated already
     f_plain_text_details.seek(0)
 
-    for word_sen, lemma_sen, pos_sen, morph_sen, details in zip(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plain_text_details):
+    for word_sen, lemma_sen, pos_sen, morph_sen, parsing_results, details in \
+            zip(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen, f_plain_text_details):
         details = details.split()
         dialog_turn_list_i = int(re.split(STR_DIALOG_TURNS_LIST+':', details[0])[1])
         mini_dialog_turn_list_i = int(re.split(STR_MINI_DIALOG_TURN_LIST+':', details[1])[1])
@@ -36,6 +37,10 @@ def addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_mo
             [STR_MINI_DIALOG_TURN_LIST][mini_dialog_turn_list_i] \
             [PLAIN_TEXT_PARSED_MORPH] = morph_sen
 
+        src_json_data[STR_DIALOG_TURNS_LIST][dialog_turn_list_i] \
+            [STR_MINI_DIALOG_TURN_LIST][mini_dialog_turn_list_i] \
+            [PLAIN_TEXT_PARSING_RESULTS] = parsing_results
+
     logging.info('New attributes were added to data')
 
     return src_json_data
@@ -51,10 +56,12 @@ def processPlainTextParsed(f_plain_text_parsed):
     all_lemma_sen = []
     all_pos_sen = []
     all_morph_sen = []
+    all_parsing_results_sen = []
     word_sen = []
     lemma_sen = []
     pos_sen = []
     morph_sen = []
+    parsing_results_sen = []
 
     for line in f_plain_text_parsed:
 
@@ -86,29 +93,36 @@ def processPlainTextParsed(f_plain_text_parsed):
             lemma_sen.append(lemma)
             pos_sen.append(pos)
             morph_sen.append(morph)
+
+            # parsing_results_word = 'WORD:' + word + '|LEMMA:' + lemma + '|POS:' + pos + '|MORPH:' + morph
+            parsing_results_word = 'W:' + word + '|L:' + lemma + '|POS:' + pos + '|M:' + morph
+            parsing_results_sen.append(parsing_results_word)
         else:
             # convert from list to str with join
             all_word_sen.append(' '.join(word_sen))
             all_lemma_sen.append(' '.join(lemma_sen))
             all_pos_sen.append(' '.join(pos_sen))
             all_morph_sen.append(' '.join(morph_sen))
+            all_parsing_results_sen.append(' '.join(parsing_results_sen))
             word_sen = []
             lemma_sen = []
             pos_sen = []
             morph_sen = []
+            parsing_results_sen = []
 
     logging.info('New attributes were precessed')
 
-    return all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen
+    return all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen
 
 
-def verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plain_text_details, f_plain_text):
+def verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen, f_plain_text_details, f_plain_text):
     f_plain_text_details_len = sum(1 for line in f_plain_text_details)
 
     all_word_sen_len = len(all_word_sen)
     all_lemma_sen_len = len(all_lemma_sen)
     all_pos_sen_len = len(all_pos_sen)
     all_morph_sen_len = len(all_morph_sen)
+    all_parsing_results_sen_len = len(all_parsing_results_sen)
 
     if all_word_sen_len != f_plain_text_details_len:
         raise Exception('Word parsed lines and Details files are not equal!')
@@ -121,6 +135,9 @@ def verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plai
 
     if all_morph_sen_len != f_plain_text_details_len:
         raise Exception('Morphological parsed lines and Details files are not equal!')
+
+    if all_parsing_results_sen_len != f_plain_text_details_len:
+        raise Exception('Parsing results parsed lines and Details files are not equal!')
 
 
 def writeJson2File(target_json_data, json_target_file_name):
@@ -156,14 +173,14 @@ if __name__ == '__main__':
 
     f_plain_text_parsed, f_plain_text_details, f_plain_text = initFiles()
 
-    all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen = processPlainTextParsed(f_plain_text_parsed)
-    verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plain_text_details, f_plain_text)
+    all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen = processPlainTextParsed(f_plain_text_parsed)
+    verifyLength(all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen, f_plain_text_details, f_plain_text)
 
     with open(json_src_file_name) as f:
         src_json_data = json.load(f)
         logging.info('Source json file was loaded')
 
-    target_json_data = addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, f_plain_text_details)
+    target_json_data = addAttr2Json(src_json_data, all_word_sen, all_lemma_sen, all_pos_sen, all_morph_sen, all_parsing_results_sen, f_plain_text_details)
 
     writeJson2File(target_json_data, json_target_file_name)
 
