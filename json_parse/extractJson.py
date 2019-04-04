@@ -64,7 +64,37 @@ def removeParenthesis(word):
 
 
 def removePunc(word):
+    # remove all punc
     fixed_word = word.translate(str.maketrans('','',string.punctuation))
+
+    return fixed_word
+
+
+def fixPunc(word):
+    # remove () [] <>
+    # replace .,?!\/-_*;:'#$= with spaces
+
+    fixed_word = word.translate(str.maketrans('', '', '()[]<>'))
+
+    fixed_word = fixed_word.replace('.', ' ')
+    fixed_word = fixed_word.replace(',', ' ')
+    fixed_word = fixed_word.replace('?', ' ')
+    fixed_word = fixed_word.replace(u'?', ' ')
+    fixed_word = fixed_word.replace('!', ' ')
+    fixed_word = fixed_word.replace('\\', ' ')
+    fixed_word = fixed_word.replace('/', ' ')
+    fixed_word = fixed_word.replace('-', ' ')
+    fixed_word = fixed_word.replace('_', ' ')
+    fixed_word = fixed_word.replace('*', ' ')
+    fixed_word = fixed_word.replace(';', ' ')
+    fixed_word = fixed_word.replace(':', ' ')
+    # fixed_word = fixed_word.replace('"', ' ')
+    fixed_word = fixed_word.replace('\'', ' ')
+    fixed_word = fixed_word.replace('#', ' ')
+    fixed_word = fixed_word.replace('$', ' ')
+    fixed_word = fixed_word.replace('=', ' ')
+    fixed_word = fixed_word.replace('↓', ' ')
+    fixed_word = fixed_word.replace('↑', ' ')
 
     return fixed_word
 
@@ -80,12 +110,14 @@ def write2files(dialog_turn_i, mini_dialog_turn_i, processed_plain_text, f_plain
     # write plain text splited
     processed_plain_text_list = processed_plain_text.split()
     for word in processed_plain_text_list:
-        #fixed_word = removeParenthesis(word)
-        fixed_word = removePunc(word)
-        #no_punc_word_list = removeSuffixPunc(fixed_word)
-        # for processed_word in no_punc_word_list:
-        #     f_plain_text_word_splited.write("%s\n" % processed_word)
-        f_plain_text_word_splited.write("%s\n" % fixed_word)
+        # fixed_word = removeParenthesis(word)
+        # fixed_word = removePunc(word)
+        fixed_word = fixPunc(word)
+        no_space_words_list = fixed_word.split()
+        # no_punc_word_list = removeSuffixPunc(fixed_word)
+        for processed_word in no_space_words_list:
+            f_plain_text_word_splited.write("%s\n" % processed_word)
+        #f_plain_text_word_splited.write("%s\n" % fixed_word)
     f_plain_text_word_splited.write('\n')
 
 

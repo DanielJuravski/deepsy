@@ -2,6 +2,7 @@ import json
 import sys
 import logging
 import re
+import string
 
 from loggerService import initLogger
 from loggerService import LOG_FILE
