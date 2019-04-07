@@ -72,7 +72,7 @@ def removePunc(word):
 
 def fixPunc(word):
     # remove () [] <>
-    # replace .,?!\/-_*;:'#$= with spaces
+    # replace .,?!\/-_*;:'#$=" with spaces
 
     fixed_word = word.translate(str.maketrans('', '', '()[]<>'))
 
@@ -88,7 +88,7 @@ def fixPunc(word):
     fixed_word = fixed_word.replace('*', ' ')
     fixed_word = fixed_word.replace(';', ' ')
     fixed_word = fixed_word.replace(':', ' ')
-    # fixed_word = fixed_word.replace('"', ' ')
+    fixed_word = fixed_word.replace('"', ' ')
     fixed_word = fixed_word.replace('\'', ' ')
     fixed_word = fixed_word.replace('#', ' ')
     fixed_word = fixed_word.replace('$', ' ')
