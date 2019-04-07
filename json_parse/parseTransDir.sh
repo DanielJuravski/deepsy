@@ -44,3 +44,4 @@ find  $SRC_DIR -type f | while read file; do
 
 done
 
+echo All transcriptions were parsed.
