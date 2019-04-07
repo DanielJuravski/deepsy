@@ -6,5 +6,6 @@ $ ./parseTransDir.sh "<parser_type> <src_dir> <target_dir>
 	1. parsing by word
 	2. parsing by lemma
 	3. parsing by pos
+	4. parsing by morphological features
 
 
