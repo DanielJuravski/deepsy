@@ -1,0 +1,10 @@
+The visualize.py script is making a plot of the --output-doc-topics output.
+
+Required programs:
+numpy
+pandas
+seaborn
+matplotlib
+operator
+
+
