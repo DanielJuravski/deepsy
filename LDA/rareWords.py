@@ -94,21 +94,35 @@ def iterate_dir(trans_dir, words_dict, filter_by):
     return words_dict
 
 
-def write2File(rare_words_file_name, words_dict, word_freq_threshold):
+def write2File(rare_words_file_name, rare_words):
     with open(rare_words_file_name, 'w') as f:
-        for word, freq in words_dict.items():
-            if freq <= word_freq_threshold:
-                f.write(word)
-                f.write('\n')
+        for word in rare_words:
+            f.write(word)
+            f.write('\n')
+
+
+def processRare(words_dict, word_freq_threshold):
+    rare_words = []
+    for word, freq in words_dict.items():
+        if freq <= word_freq_threshold:
+            rare_words.append(word)
+
+    return rare_words
+
 
 if __name__ == '__main__':
     # That script extracts rare words/lemmas.
-    # run for Usage print.
+    # run without params for Usage print.
 
     trans_dir, word_freq_threshold, rare_words_file_name, filter_by = getOptions()
     words_dict = defaultdict(int)
+    # get all words in the docs
     words_dict = iterate_dir(trans_dir, words_dict, filter_by)
-    write2File(rare_words_file_name, words_dict, word_freq_threshold)
+    # get rare words
+    rare_words = processRare(words_dict, word_freq_threshold)
+
+    # write all the anomalous words to file
+    write2File(rare_words_file_name, rare_words)
 
 
 
