@@ -1,11 +1,17 @@
 import os
+import datetime
+from collections import Counter
 
 
 class Documents(object):
-    """
-    Batch of imported documents object
-    """
     def __init__(self, documents_dir_name, stop_words_dir_name):
+        """
+        Batch of imported documents and their vocabulary object.
+        The object contains list of lists, where each sub-list is a list of tokens that represents a document and
+        the documents tokenized vocabulary after stop-words filtering (words in stop-words files are not in the vocab.
+        :param documents_dir_name: dir where all the documents files.
+        :param stop_words_dir_name: dir where all the stop-words files.
+        """
 
         # Documents dir with all documents files. No validation checks, assumes the dir is valid.
         self.documents_dir_name = documents_dir_name
@@ -14,10 +20,16 @@ class Documents(object):
         self.vocab = {}
 
         # Each time work inserted to vocab - tokenize it with this value and increase it.
-        self.last_word_token = 0
+        self.tokens_num = 0
+
+        # How many times each token is appeared in the documents. Uses for sanity.
+        self.tokens_count = Counter()
 
         # List of tokenized documents
         self.documents = []
+
+        # num of tokenized documents words
+        self.words_num = 0
 
         # In stop_words_dir_name there are files that contain the stop-words. Stop-words should not be tokenized.
         self.stop_words_dir_name = stop_words_dir_name
@@ -27,7 +39,7 @@ class Documents(object):
         self.stop_words_set = set()
 
         # load stop-words
-        self.loadStopWords()
+        self.loadStopWords(ignore_stop_words=False)
 
         # load and process the documents files
         self.loadDocs()
@@ -36,20 +48,21 @@ class Documents(object):
         self.statistics()
 
     def loadDocs(self):
-        print('Loading documents ...')
+        printime('Loading documents ...', '')
 
         dir = os.fsencode(self.documents_dir_name)
         for doc in os.listdir(dir):
             doc_name = os.fsdecode(doc)
             doc_full_path = self.documents_dir_name + str(doc_name)
-            #print('loading document: {0}'.format(doc_name))
+            # print('loading document: {0}'.format(doc_name))
 
             with open(doc_full_path, 'r') as f:
                 doc_words = f.read().split()
                 doc_tokens = self.add2Vocab(doc_words)
                 self.documents.append(doc_tokens)
+                self.words_num += len(doc_tokens)
 
-        print("Loading was done successfully.")
+        printime('Loading was done successfully.', '')
 
     def add2Vocab(self, doc_words, filter_uni=True, filter_bi=False):
         """
@@ -77,33 +90,36 @@ class Documents(object):
 
                 # add to vocab
                 if word not in self.vocab:
-                    self.vocab[word] = self.last_word_token
-                    self.last_word_token += 1
+                    self.vocab[word] = self.tokens_num
+                    self.tokens_num += 1
 
                 # tokenize doc
                 token = self.vocab[word]
-                # print(word)
+                self.tokens_count[word] += 1
                 doc_tokens.append(token)
 
         return doc_tokens
 
-    def loadStopWords(self):
+    def loadStopWords(self, ignore_stop_words=False):
         """
         load stop words files. iterate over the stop-words dir, open each file and extract the words that in the file.
         words that will be in the stop-words set won't be tokenized
-        :param
+        :param ignore_stop_words: ignore the stop-words file. Do NOT load them.
         :return:
         """
-        dir = os.fsencode(self.stop_words_dir_name)
-        for file in os.listdir(dir):
-            file_name = os.fsdecode(file)
-            file_full_path = self.stop_words_dir_name + str(file_name)
-            print('Loading stop-words: {0}'.format(file_name))
+        if ignore_stop_words == True:
+            printime('Ignoring stop-words files. Stop-words files were NOT loaded!', '')
+        else:
+            dir = os.fsencode(self.stop_words_dir_name)
+            for file in os.listdir(dir):
+                file_name = os.fsdecode(file)
+                file_full_path = self.stop_words_dir_name + str(file_name)
+                printime('Loading stop-words:', file_name)
 
-            with open(file_full_path, 'r') as f:
-                words = f.read().split()
-                for word in words:
-                    self.stop_words_set.add(word)
+                with open(file_full_path, 'r') as f:
+                    words = f.read().split()
+                    for word in words:
+                        self.stop_words_set.add(word)
 
     def statistics(self):
         """
@@ -112,9 +128,15 @@ class Documents(object):
         """
         print()
         print("Num of documents: {0}".format(len(self.documents)))
-        print("Num of tokens: {0}".format(self.last_word_token))
-
+        print("Num of words: {0}".format(self.words_num))
+        print("Num of tokens: {0}".format(self.tokens_num))
         print("Num of stop words: {0}".format(len(self.stop_words_set)))
+        print()
+
+
+def printime(msg, param):
+    time_now = datetime.datetime.now().strftime("%H:%M:%S")
+    print('{0} {1} {2}'.format(time_now, msg, param))
 
 
 if __name__ == '__main__':
