@@ -28,6 +28,9 @@ class Documents(object):
         # List of tokenized documents
         self.documents = []
 
+        # dict of len of each document. len is how many words are in the document
+        self.documents_len = {}
+
         # num of tokenized documents words
         self.words_num = 0
 
@@ -49,7 +52,7 @@ class Documents(object):
 
     def loadDocs(self):
         printime('Loading documents ...', '')
-
+        doc_i = 0
         dir = os.fsencode(self.documents_dir_name)
         for doc in os.listdir(dir):
             doc_name = os.fsdecode(doc)
@@ -61,6 +64,9 @@ class Documents(object):
                 doc_tokens = self.add2Vocab(doc_words)
                 self.documents.append(doc_tokens)
                 self.words_num += len(doc_tokens)
+                self.documents_len[doc_i] = len(doc_tokens)
+
+            doc_i += 1
 
         printime('Loading was done successfully.', '')
 

@@ -60,7 +60,7 @@ def initWT(data, params, ta):
     vocab_len = len(data.vocab)
 
     # init matrix
-    wt = [[0 for i in range(K)] for j in range(vocab_len)]
+    wt = np.zeros([vocab_len, K])
     wt = updateWT(wt, data.documents, ta)
 
     return wt
@@ -99,7 +99,7 @@ def initDT(data, params, ta):
     documents_len = len(data.documents)
 
     # init matrix
-    dt = [[0 for i in range(K)] for j in range(documents_len)]
+    dt = np.zeros([documents_len, K])
     dt = updateDT(dt, data.documents, ta)
 
     return dt
@@ -107,12 +107,12 @@ def initDT(data, params, ta):
 
 def sanityMatrices(ta, wt, dt, data):
     # check sum of appearance, need to be summarized to the num of words
-    wt_sum = sum(sum(wt, []))
+    wt_sum = wt.sum()
     if wt_sum != data.words_num:
         raise Exception('wt matrix values are incorrect')
 
     # check sum of appearance, need to be summarized to the num of words
-    dt_sum = sum(sum(dt, []))
+    dt_sum = dt.sum()
     if dt_sum != data.words_num:
         raise Exception('dt matrix values are incorrect')
 
@@ -126,12 +126,30 @@ def sanityMatrices(ta, wt, dt, data):
             raise Exception('wt matrix values are incorrect token {0} has more/few attributions to topics then it needs to'.format(token_i))
 
 
+def initT(params, ta):
+    """
+    iterate over ta and count topics co-appearance
+    :param params:
+    :param ta:
+    :return:
+    """
+    K = params['K']
+    t = np.zeros(K)
+
+    for doc in ta:
+        for word in doc:
+            t[word] += 1
+
+    return t
+
+
 def initMatrices(data, params):
     """
     init ta list and wt, dt matrices
     ta: topic assignment
     wt: word topic
     dt: document topic
+    t: topic count array
     :param data: Documents data
     :param params: model params
     :return: initialized ta, wt, dt
@@ -139,21 +157,23 @@ def initMatrices(data, params):
     ta = initTA(data, params)
     wt = initWT(data, params, ta)
     dt = initDT(data, params, ta)
+    t = initT(params, ta)
 
     sanityMatrices(ta, wt, dt, data)
 
-    return ta, wt, dt
+    return ta, wt, dt, t
 
 
-def decreaseMatricesCount(doc_i, word_i, token, ta, wt, dt):
+def decreaseMatricesCount(doc_i, word_i, token, ta, wt, dt, t):
     topic = ta[doc_i][word_i]
     dt[doc_i][topic] -= 1
     wt[token][topic] -= 1
+    t[topic] -= 1
 
-    return dt, wt
+    return dt, wt, t
 
 
-def train(ta, wt, dt, data, params):
+def train(ta, wt, dt, t, data, params):
     iterations = params['iterations']
     K = params['K']
     alpha = params['alpha']
@@ -161,15 +181,16 @@ def train(ta, wt, dt, data, params):
     documents = data.documents
     tokens_num = data.tokens_num
     words_num = data.words_num
+    L = data.documents_len
 
     printime('Train started', '')
     for iteration in range(iterations):
-        if iteration % 10 == 0:
-            # printime('Training iteration', iteration)
+        if iteration % 1 == 0:
+            printime('Training iteration', iteration)
             pass
         for doc_i in range(len(documents)):
-            if iteration % 10 == 0:
-                # printime('Training doc', doc_i)
+            if doc_i % 5000 == 0:
+                printime('Training doc', doc_i)
                 pass
             doc = documents[doc_i]
             for word_i in range(len(doc)):
@@ -177,27 +198,25 @@ def train(ta, wt, dt, data, params):
 
                 # z_-i means that we do not include token w in our word-topic and document-topic count matrix when
                 # sampling for token w, only leave the topic assignments of all other tokens for current document
-                dt, wt = decreaseMatricesCount(doc_i, word_i, token, ta, wt, dt)
+                dt, wt, t = decreaseMatricesCount(doc_i, word_i, token, ta, wt, dt, t)
 
-                # calculate probs for every topic
-                next_topic_probs = []
-                for topic in range(K):
-                    wt_wj = wt[token][topic]
-                    wt_sigma = sum([wt[i][topic] for i in range(tokens_num)])
-                    dt_dj = dt[doc_i][topic]
-                    dt_sigma = sum([dt[doc_i][j] for j in range(K)])
+                p_wk = (wt[token, :] + eta) / (t + tokens_num * eta)
+                p_dt = (dt[doc_i, :] + alpha) / (L[doc_i] + K * alpha)
 
-                    prob_topic = ((wt_wj + eta)/(wt_sigma + tokens_num * eta)) * ((dt_dj + alpha)/(dt_sigma + K * alpha))
-                    next_topic_probs.append(prob_topic)
+                p_z_iv = p_wk * p_dt
+                # normalize to 1
+                p_z_iv /= np.sum(p_z_iv)
 
-                normalized_next_topic_probs = [next_topic_probs[i]/sum(next_topic_probs) for i in range(K)]
-                sampled_topic = np.random.choice(a=K, p=normalized_next_topic_probs)
+                # resample word topic assignment
+                sampled_topic = np.random.multinomial(1, p_z_iv).argmax()
 
                 # update matrices
                 ta[doc_i][word_i] = sampled_topic
                 wt[token][sampled_topic] += 1
                 dt[doc_i][sampled_topic] += 1
+                t[sampled_topic] += 1
                 # sanityMatrices(ta, wt, dt, data)
+
     printime('Train ended', '')
 
     return ta, wt, dt
@@ -225,6 +244,7 @@ def printTopics(wt, data, params):
 
         msg = "sum prob over topic {0}: {1}".format(topic, prob_topic_i)
         print(msg)
+        print(phi)
     print()
 
 
@@ -236,10 +256,10 @@ if __name__ == '__main__':
     """
     That is a vanilla impl of the LDA topic model
     """
-    K = 10
+    K = 50
     alpha = 1
     eta = 0.001
-    iterations = 500
+    iterations = 2
     # how many words print in the Topic-Key print
     tokens_to_print = 20
 
@@ -250,12 +270,12 @@ if __name__ == '__main__':
     params['iterations'] = iterations
     params['tokens_to_print'] = tokens_to_print
 
-    data = utils.Documents(documents_dir_name='/home/daniel/deepsy/LDA/test/',
+    data = utils.Documents(documents_dir_name='/home/daniel/deepsy/LDA/client_5_mini_turns/',
                        # documents_dir_name=/home/daniel/deepsy/LDA/client_5_mini_turns/,
                        stop_words_dir_name='/home/daniel/deepsy/LDA/LDAST/STOP_WORDS/')
 
-    ta, wt, dt = initMatrices(data, params)
-    ta, wt, dt = train(ta, wt, dt, data, params)
+    ta, wt, dt, t = initMatrices(data, params)
+    ta, wt, dt = train(ta, wt, dt, t, data, params)
 
     printOutput(ta, wt, dt, data, params)
 
