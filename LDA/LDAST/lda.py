@@ -1,5 +1,11 @@
-from LDA.LDAST import utils
-from LDA.LDAST.utils import printime
+#!/usr/bin/env python3
+#
+import os.path
+HERE = os.path.dirname(__file__)
+print(HERE)
+
+import utils
+from utils import printime
 import copy
 from random import randint
 import numpy as np
