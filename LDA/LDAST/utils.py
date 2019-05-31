@@ -1,38 +1,45 @@
 import os
 import datetime
+import random
+import numpy as np
 from collections import Counter
 
 
 class Documents(object):
-    def __init__(self, documents_dir_name, stop_words_dir_name):
+    def __init__(self, documents_dir_name, stop_words_dir_name, K):
         """
         Batch of imported documents and their vocabulary object.
-        The object contains list of lists, where each sub-list is a list of tokens that represents a document and
-        the documents tokenized vocabulary after stop-words filtering (words in stop-words files are not in the vocab.
+        The 'Documents' object include 2 macro information:
+        Documents.documents: list of dicts, where each dist got:
+        1. The original document words
+        2. Tokenized words of the document (After stop-words filter)
+        3. List of size K, that indicates the count of each topic in this document.
+        Documents.vocab: list of the tokens (words in stop-words files are not in the vocab.
         :param documents_dir_name: dir where all the documents files.
         :param stop_words_dir_name: dir where all the stop-words files.
+        :param K: number of topics
         """
 
         # Documents dir with all documents files. No validation checks, assumes the dir is valid.
         self.documents_dir_name = documents_dir_name
 
-        # Vocabulary of the files that created the documents. Each word is unique.
-        self.vocab = {}
+        # Vocabulary of the tokens that created the documents. Each word is unique.
+        self.vocab = []
 
-        # Each time work inserted to vocab - tokenize it with this value and increase it.
-        self.tokens_num = 0
+        # Vocabulary size (length)
+        self.vocab_size = 0
 
-        # How many times each token is appeared in the documents. Uses for sanity.
-        self.tokens_count = Counter()
+        # Vocab's tokens id's
+        self.tokens_ids = {}
+
+        # Count all the words in the input documents before the stop-word filtering.
+        self.words_num_before = 0
+
+        # Count all the words in the input documents after the stop-word filtering.
+        self.words_num_after = 0
 
         # List of tokenized documents
         self.documents = []
-
-        # dict of len of each document. len is how many words are in the document
-        self.documents_len = {}
-
-        # num of tokenized documents words
-        self.words_num = 0
 
         # In stop_words_dir_name there are files that contain the stop-words. Stop-words should not be tokenized.
         self.stop_words_dir_name = stop_words_dir_name
@@ -40,6 +47,15 @@ class Documents(object):
         # Set of all the stop words that in the 'self.stop_words_dir_name'.
         # If the documents contain that words, they won't be tokenized.
         self.stop_words_set = set()
+
+        # Dict of tokens and their count
+        self.tokens_count = Counter()
+
+        # init K - num of topics
+        self.K = K
+
+        # Count the co-appearance of each topic in the documents
+        self.topic_totals = np.zeros(self.K, dtype=int)
 
         # load stop-words
         self.loadStopWords(ignore_stop_words=False)
@@ -50,9 +66,11 @@ class Documents(object):
         # print statistics
         self.statistics()
 
+        # Randomize first time topics to each word and update counters respectively.
+        self.initTopics()
+
     def loadDocs(self):
         printime('Loading documents ...', '')
-        doc_i = 0
         dir = os.fsencode(self.documents_dir_name)
         for doc in os.listdir(dir):
             doc_name = os.fsdecode(doc)
@@ -62,15 +80,22 @@ class Documents(object):
             with open(doc_full_path, 'r') as f:
                 doc_words = f.read().split()
                 doc_tokens = self.add2Vocab(doc_words)
-                self.documents.append(doc_tokens)
-                self.words_num += len(doc_tokens)
-                self.documents_len[doc_i] = len(doc_tokens)
+                doc_topic_counts = np.zeros(self.K, dtype=int)
 
-            doc_i += 1
+                self.documents.append({"original": doc_words,
+                                       "token_strings": doc_tokens,
+                                       "topic_counts": doc_topic_counts})
+
+                self.words_num_before += len(doc_words)
+                self.words_num_after += len(doc_tokens)
+
+        self.vocab = list(self.tokens_count.keys())
+        self.vocab_size = len(self.vocab)
+        self.tokens_ids = {w: i for (i, w) in enumerate(self.vocab)}
 
         printime('Loading was done successfully.', '')
 
-    def add2Vocab(self, doc_words, filter_uni=True, filter_bi=False):
+    def add2Vocab(self, doc_words, filter_uni=True, filter_bi=True):
         """
         add new works to vocab and return tokenized doc representation
         :param doc_words: list of lists with doc's words
@@ -94,15 +119,9 @@ class Documents(object):
             # validate stop-word
             if word not in self.stop_words_set:
 
-                # add to vocab
-                if word not in self.vocab:
-                    self.vocab[word] = self.tokens_num
-                    self.tokens_num += 1
+                doc_tokens.append(word)
 
-                # tokenize doc
-                token = self.vocab[word]
-                self.tokens_count[word] += 1
-                doc_tokens.append(token)
+        self.tokens_count.update(doc_tokens)
 
         return doc_tokens
 
@@ -134,17 +153,43 @@ class Documents(object):
         """
         print()
         print("Num of documents: {0}".format(len(self.documents)))
-        print("Num of words: {0}".format(self.words_num))
-        print("Num of tokens: {0}".format(self.tokens_num))
+        print("Num of words before droping: {0}".format(self.words_num_before))
+        print("Num of words after droping: {0}".format(self.words_num_after))
+        print("Num of tokens: {0}".format(self.vocab_size))
         print("Num of stop words: {0}".format(len(self.stop_words_set)))
         print()
 
+    def initTopics(self):
+        for document in self.documents:
+            tokens_list = document["token_strings"]
+
+            doc_tokens_ids = np.ndarray(len(tokens_list), dtype=int)
+            doc_topics = np.ndarray(len(tokens_list), dtype=int)
+
+            for i, w in enumerate(tokens_list):
+                token_id = self.tokens_ids[w]
+                topic = random.randrange(self.K)
+
+                doc_tokens_ids[i] = token_id
+                doc_topics[i] = topic
+
+            document["doc_tokens"] = doc_tokens_ids
+            document["doc_topics"] = doc_topics
+
 
 def printime(msg, param):
-    time_now = datetime.datetime.now().strftime("%H:%M:%S")
+    time_now = datetime.datetime.now().strftime("%H:%M:%S:%f")
     print('{0} {1} {2}'.format(time_now, msg, param))
 
 
-if __name__ == '__main__':
-    myDocs = Documents(documents_dir_name='/home/daniel/deepsy/LDA/client_5_mini_turns/', #/home/daniel/deepsy/LDA/client_5_mini_turns/
-                       stop_words_dir_name='/home/daniel/deepsy/LDA/LDAST/STOP_WORDS/')
+def i2w(index, vocab):
+    """
+    get word with index i from the word vocab
+    :param index:
+    :return:
+    """
+    for key, value in vocab.items():
+        if value == index:
+            return key
+
+
