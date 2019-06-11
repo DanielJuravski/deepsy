@@ -93,6 +93,7 @@ def write2File(common_words_file_name, common_words):
 
 
 def processCommon(common_words_dict, common_threshold, dir_size):
+    print("Processing ...")
     common_words = []
     for word, freq in common_words_dict.items():
         if freq >= common_threshold*dir_size:

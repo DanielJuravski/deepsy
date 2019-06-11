@@ -44,8 +44,8 @@ def main():
     info_file = 'info.txt'
     keys_file = 'keys.txt'
 
-    data = Documents(documents_dir_name='/home/daniel/deepsy/LDA/client_5_mini_turns/',
-                     stop_words_dir_name='/home/daniel/deepsy/LDA/LDAST/STOP_WORDS/',
+    data = Documents(documents_dir_name='/home/daniel/deepsy/TM/client_5_mini_turns/',
+                     stop_words_dir_name='/home/daniel/deepsy/TM/Models/STOP_WORDS/',
                      K=K)
 
     model = LDAGibbs.LDAGibbsSampler(data, params)

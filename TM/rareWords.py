@@ -42,6 +42,9 @@ def getOptions():
     if '--filter-by' in sys.argv:
         option_i = sys.argv.index('--filter-by')
         filter_by = sys.argv[option_i + 1]
+        if filter_by != 'word' and filter_by != 'lemma':
+            print("ERROR: filter_by value must be 'word' or 'lemma'.")
+            print("Exiting.")
 
     if trans_dir == None or \
         word_freq_threshold == None or \
@@ -55,7 +58,7 @@ def getOptions():
     return trans_dir, word_freq_threshold, rare_words_file_name, filter_by
 
 
-def extract(src_json_data, words_dict, filter_by):
+def extract(src_json_data, rare_words_dict, filter_by):
     dialog_turns_list = src_json_data[STR_DIALOG_TURNS_LIST]
     dialog_turns_list_len = len(dialog_turns_list)
     for dialog_turn_i in range(dialog_turns_list_len):
@@ -68,18 +71,14 @@ def extract(src_json_data, words_dict, filter_by):
                 plain_text = mini_dialog_turn[PLAIN_TEXT_PARSED_WORD]
             elif filter_by == 'lemma':
                 plain_text = mini_dialog_turn[PLAIN_TEXT_PARSED_LEMMA]
-            else:
-                print("ERROR: filter_by value must be 'word' or 'lemma'.")
-                print("Exiting.")
-                sys.exit()
             words = plain_text.split()
             for word in words:
-                words_dict[word] += 1
+                rare_words_dict[word] += 1
 
-    return words_dict
+    return rare_words_dict
 
 
-def iterate_dir(trans_dir, words_dict, filter_by):
+def iterate_dir(trans_dir, rare_words_dict, filter_by):
     directory = os.fsencode(trans_dir)
     for file in os.listdir(directory):
 
@@ -89,9 +88,9 @@ def iterate_dir(trans_dir, words_dict, filter_by):
 
         with open(json_src_file_name) as f:
             src_json_data = json.load(f)
-            words_dict = extract(src_json_data, words_dict, filter_by)
+            rare_words_dict = extract(src_json_data, rare_words_dict, filter_by)
 
-    return words_dict
+    return rare_words_dict
 
 
 def write2File(rare_words_file_name, rare_words):
@@ -114,12 +113,14 @@ if __name__ == '__main__':
     # That script extracts rare words/lemmas.
     # run without params for Usage print.
 
+    # initialization
     trans_dir, word_freq_threshold, rare_words_file_name, filter_by = getOptions()
-    words_dict = defaultdict(int)
+    rare_words_dict = defaultdict(int)
+
     # get all words in the docs
-    words_dict = iterate_dir(trans_dir, words_dict, filter_by)
+    rare_words_dict = iterate_dir(trans_dir, rare_words_dict, filter_by)
     # get rare words
-    rare_words = processRare(words_dict, word_freq_threshold)
+    rare_words = processRare(rare_words_dict, word_freq_threshold)
 
     # write all the anomalous words to file
     write2File(rare_words_file_name, rare_words)

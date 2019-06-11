@@ -74,7 +74,7 @@ def iterateTrans(trans_dir):
     directory = os.fsencode(trans_dir)
     for file in os.listdir(directory):
         file_name = os.fsdecode(file)
-        json_src_file_name = TRANS_DIR + file_name
+        json_src_file_name = trans_dir + file_name
         print('iterating over {0}'.format(json_src_file_name))
         with open(json_src_file_name) as f:
             src_json_data = json.load(f)
