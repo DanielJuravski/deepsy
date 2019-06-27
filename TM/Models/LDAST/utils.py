@@ -6,7 +6,7 @@ from collections import Counter
 
 
 class Documents(object):
-    def __init__(self, documents_dir_name, stop_words_dir_name, K, S):
+    def __init__(self, documents_dir_name, stop_words_dir_name, K, emb_vocab_file_name, S=-1):
         """
         Batch of imported documents and their vocabulary object.
         The 'Documents' object include 2 macro information:
@@ -18,7 +18,7 @@ class Documents(object):
         :param documents_dir_name: dir where all the documents files.
         :param stop_words_dir_name: dir where all the stop-words files.
         :param K: number of topics
-        :param S: number of sub-topics
+        :param S: number of sub-topics. S must be initialized at 'init_topics' method
         """
 
         # Documents dir with all documents files. No validation checks, assumes the dir is valid.
@@ -45,6 +45,14 @@ class Documents(object):
         # In stop_words_dir_name there are files that contain the stop-words. Stop-words should not be tokenized.
         self.stop_words_dir_name = stop_words_dir_name
 
+        # txt file with all words that got emb. will bw loaded to self.all_emb_words
+        # if there is a word in data and not in that txt, drop it.
+        self.emb_vocab_file_name = emb_vocab_file_name
+
+        # self.all_emb_words is deleted after loading documents for mem saving
+        self.all_emb_words = None
+        self.all_emb_words_len = None
+
         # Set of all the stop words that in the 'self.stop_words_dir_name'.
         # If the documents contain that words, they won't be tokenized.
         self.stop_words_set = set()
@@ -67,9 +75,6 @@ class Documents(object):
         # print statistics
         self.statistics()
 
-        # Randomize first time topics to each word and update counters respectively.
-        self.initTopics()
-
     def loadDocs(self):
         printime('Loading documents ...', '')
         dir = os.fsencode(self.documents_dir_name)
@@ -82,19 +87,19 @@ class Documents(object):
                 doc_words = f.read().split()
                 doc_tokens = self.add2Vocab(doc_words)
                 doc_topic_counts = np.zeros(self.K, dtype=int)
-                doc_subtopic_counts = np.zeros(self.S, dtype=int)
 
                 self.documents.append({"original": doc_words,
                                        "token_strings": doc_tokens,
-                                       "topic_counts": doc_topic_counts,
-                                       "doc_subtopics_counts": doc_subtopic_counts})
+                                       "topic_counts": doc_topic_counts})
 
                 self.words_num_before += len(doc_words)
                 self.words_num_after += len(doc_tokens)
-
         self.vocab = list(self.tokens_count.keys())
         self.vocab_size = len(self.vocab)
         self.tokens_ids = {w: i for (i, w) in enumerate(self.vocab)}
+
+        # for saving mem
+        del self.all_emb_words
 
         printime('Loading was done successfully.', '')
 
@@ -118,6 +123,10 @@ class Documents(object):
             if filter_bi:
                 if len(word) == 2:
                     continue
+
+            # drop word if it does not have emb
+            if word not in self.all_emb_words:
+                continue
 
             # validate stop-word
             if word not in self.stop_words_set:
@@ -149,6 +158,16 @@ class Documents(object):
                     for word in words:
                         self.stop_words_set.add(word)
 
+        # load emb words for future filtering
+        word_dict = {}
+        with open(self.emb_vocab_file_name, 'r') as f:
+            words = f.read().splitlines()
+            # convert to dict for faster iterations
+            for i, word in enumerate(words):
+                word_dict[word] = i
+            self.all_emb_words = word_dict
+            self.all_emb_words_len = len(self.all_emb_words)
+
     def statistics(self):
         """
         print statistics of the relevant variables
@@ -160,15 +179,19 @@ class Documents(object):
         print("Num of words after droping: {0}".format(self.words_num_after))
         print("Num of tokens: {0}".format(self.vocab_size))
         print("Num of stop words: {0}".format(len(self.stop_words_set)))
+        print("Num of initially emb vocab: {0}".format(self.all_emb_words_len))
         print()
 
-    def initTopics(self):
+    # Randomize first time topics & subtopics to each word and update counters respectively.
+    def initTopics(self, S):
+        self.S = S
         for document in self.documents:
             tokens_list = document["token_strings"]
 
-            doc_tokens_ids = np.ndarray(len(tokens_list), dtype=int)
-            doc_topics = np.ndarray(len(tokens_list), dtype=int)
-            doc_subtopics = np.ndarray(len(tokens_list), dtype=int)
+            doc_tokens_ids = np.ndarray(shape=[len(tokens_list)], dtype=int)
+            doc_topics = np.ndarray(shape=[len(tokens_list)], dtype=int)
+            doc_subtopics = np.ndarray(shape=[len(tokens_list)], dtype=int)
+            doc_subtopic_counts = np.zeros(self.S, dtype=int)
 
             for i, w in enumerate(tokens_list):
                 token_id = self.tokens_ids[w]
@@ -182,6 +205,7 @@ class Documents(object):
             document["doc_tokens"] = doc_tokens_ids
             document["doc_topics"] = doc_topics
             document["doc_subtopics"] = doc_subtopics
+            document["doc_subtopics_counts"] = doc_subtopic_counts
 
 
 
@@ -203,31 +227,60 @@ def i2w(index, vocab):
 
 
 class Vectors(object):
-    def __init__(self, emb_file_path):
+    def __init__(self, emb_file_path, emb_format, data_vocab, vocab_file_path=None):
         self.emb_file_path = emb_file_path
+        self.vocab_file_path = vocab_file_path
+        self.emb_format = emb_format
+        # dont load words that do not exist in the data
+        self.data_vocab = data_vocab
+
         self.vectors = {}
         self.dim = None
 
-        self.loadVectors(self.emb_file_path)
+        self.loadVectors()
         self.num_of_vectors = len(self.vectors)
 
-    def loadVectors(self, emb_file_path):
-        printime("Loading vectors ...",'')
-        f = open(emb_file_path, 'r')
+    def loadVectors(self):
+        if self.emb_format == 'txt':
+            self.loadVectorsTxt()
+        elif self.emb_format == 'npy':
+            self.loadVectorsNpy()
+
+    def w2v(self, word):
+        return self.vectors[word]
+
+    def loadVectorsTxt(self):
+        printime("Loading txt vectors ...", '')
+        f = open(self.emb_file_path, 'r')
         vectors = {}
         for line in f:
             splitLine = line.split()
             word = splitLine[0]
-            embedding = np.array([float(val) for val in splitLine[1:]])
-            vectors[word] = embedding
+            if word in self.data_vocab:
+                embedding = np.array([float(val) for val in splitLine[1:]])
+                vectors[word] = embedding
 
         msg = 'Loading was done. ' + str(len(vectors)) + ' words loaded!'
         printime(msg, '\n')
         self.vectors = vectors
         self.dim = len(embedding)
 
-    def w2v(self, word):
-        return self.vectors[word]
+    def loadVectorsNpy(self):
+        printime("Loading npy vectors ...", '')
+        vectors = {}
+
+        with open(self.vocab_file_path, 'r') as f:
+            vocab = f.read().splitlines()
+        emb = np.load(self.emb_file_path)
+
+        for i, word in enumerate(vocab):
+            if word in self.data_vocab:
+                vectors[word] = emb[i]
+
+        msg = 'Loading was done. ' + str(len(vectors)) + ' words loaded!'
+        printime(msg, '\n')
+        self.vectors = vectors
+        self.dim = len(emb[i])
 
 
 if __name__ == '__main__':

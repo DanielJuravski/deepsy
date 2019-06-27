@@ -36,7 +36,7 @@ class LDASTGibbsSampler:
     documents = []
     vocab = []
 
-    def __init__(self, data, params, emb, gaussians):
+    def __init__(self, data, params, gaussians):
         self.vocab.extend(data.vocab)
         self.vocab_size = data.vocab_size
         self.K = params['K']
@@ -45,7 +45,7 @@ class LDASTGibbsSampler:
         self.doc_smoothing = params['doc_smoothing']
         self.subtopic_smoothing = params['subtopic_smoothing']
         self.smoothing_times_centroids_size = self.subtopic_smoothing * self.vocab_size
-        self.emb = emb
+        # self.emb = emb
         self.gaussians = gaussians
 
         self.topic_totals = np.zeros(self.K, dtype=int)
@@ -59,7 +59,7 @@ class LDASTGibbsSampler:
         self.documents.append(doc)
 
         for i in range(len(doc.doc_tokens)):
-            token_id = doc.doc_tokens[i]
+            #token_id = doc.doc_tokens[i]
             topic = doc.doc_topics[i]
             subtopic = doc.doc_subtopics[i]
 
@@ -85,18 +85,19 @@ class LDASTGibbsSampler:
         # cdef double[:] topic_probs = np.zeros(self.K, dtype=float)
 
         topic_normalizers = np.zeros(self.K, dtype=float)
-        topic_probs = np.zeros(self.K, dtype=float)
-
+        #topic_probs = np.zeros(self.K, dtype=float)
 
         # calculate the denominator for the p_zs
         for topic in range(self.K):
             topic_normalizers[topic] = 1.0 / (self.topic_totals[topic] + self.smoothing_times_centroids_size)
 
         for iteration in range(self.iterations):
-            if iteration % 10 == 0:
+            if iteration % 1 == 0:
                 printime('Training iteration', iteration)
                 pass
             for document_i in range(len(self.documents)):
+                if document_i % 10 == 0:
+                    printime('Documemnt', document_i)
                 document = self.documents[document_i]
                 doc_tokens = document.doc_tokens
                 doc_topics = document.doc_topics
@@ -104,25 +105,18 @@ class LDASTGibbsSampler:
                 doc_subtopics = document.doc_subtopics
                 doc_subtopics_count = document.doc_subtopics_counts
                 doc_length = len(doc_tokens)
-                z_uniform_variates = np.random.random_sample(doc_length)
-                s_uniform_variates = np.random.random_sample(doc_length)
-
 
                 for pos_i in range(doc_length):
                     token_id = doc_tokens[pos_i]
                     old_subtopic = doc_subtopics[pos_i]
                     old_topic = doc_topics[pos_i]
-                    # word_topic_counts = self.word_topics[word, :]
                     # subtopic-topic counts
                     old_subtopic_topic_count = self.subtopics_topics[old_subtopic, :]
-
 
                     ######################
                     #      sample Z      #
                     ######################
-
                     # remove the effect of this token
-                    # self.updateTopicsCounters(old_topic, old_subtopic_topic_count, doc_topic_counts, operation="-")
                     old_subtopic_topic_count[old_topic] -= 1
                     self.topic_totals[old_topic] -= 1
                     doc_topic_counts[old_topic] -= 1
@@ -130,69 +124,47 @@ class LDASTGibbsSampler:
                     topic_normalizers[old_topic] = 1.0 / (
                                 self.topic_totals[old_topic] + self.smoothing_times_centroids_size)
 
-                    # sample dist
-                    sampling_sum = 0.0
-                    for topic in range(self.K):
-                        topic_probs[topic] = (doc_topic_counts[topic] + self.doc_smoothing) * \
-                                             (old_subtopic_topic_count[topic] + self.subtopic_smoothing) * \
-                                             topic_normalizers[topic]
-                        sampling_sum += topic_probs[topic]
+                    this_doc_topic_counts = doc_topic_counts + self.doc_smoothing
+                    this_subtopic_counts = old_subtopic_topic_count + self.subtopic_smoothing
+                    this_normalizer = topic_normalizers
 
-                    sample = z_uniform_variates[pos_i] * sampling_sum
+                    p = this_doc_topic_counts * this_subtopic_counts * this_normalizer
+                    sampling_sum = np.sum(p)
 
-                    new_topic = 0
-                    while sample > topic_probs[new_topic]:
-                        sample -= topic_probs[new_topic]
-                        new_topic += 1
+                    topic_probs = p / sampling_sum
+                    new_topic = np.random.choice(self.K, p=topic_probs)
+                    doc_topics[pos_i] = new_topic
 
                     # add back in the effect of this token
-                    # self.updateTopicsCounters(new_topic, old_subtopic_topic_count, doc_topic_counts, operation="+")
                     old_subtopic_topic_count[new_topic] += 1
                     self.topic_totals[new_topic] += 1
                     doc_topic_counts[new_topic] += 1
-                    doc_topics[pos_i] = new_topic
 
                     ######################
                     #      sample S      #
                     ######################
                     subtopic_topic_counts = self.subtopics_topics[:, new_topic]
                     # remove the effect of this token
-                    # self.updateSubTopicsCounters(old_subtopic, subtopic_topic_counts, doc_subtopics_count, operation="-")
                     subtopic_topic_counts[old_subtopic] -= 1
                     doc_subtopics_count[old_subtopic] -= 1
 
-
-                    # for subtopic_i in range(self.S):
-                    #     subtopic_normalizers[subtopic_i] = 1.0 / (self.topic_totals[current_topic] + self.smoothing_times_centroids_size)
-                    # subtopic_normalizers = np.zeros(self.S, dtype=float)
                     subtopic_normalizer = 1.0 / (self.topic_totals[new_topic] + self.smoothing_times_centroids_size)
 
-                    subtopic_probs = np.zeros(self.S, dtype=float)
+                    this_doc_topic_counts = (doc_topic_counts[new_topic] + self.doc_smoothing)
+                    this_subtopic_counts = subtopic_topic_counts + self.subtopic_smoothing
+                    this_normalizer = subtopic_normalizer
 
-                    # sample dist
-                    sampling_sum = 0.0
-                    for subtopic in range(self.S):
-                        p = (doc_topic_counts[new_topic] + self.doc_smoothing) * \
-                            (subtopic_topic_counts[subtopic] + self.subtopic_smoothing) * \
-                            subtopic_normalizer
-                        g = self.gaussians[token_id, subtopic]
+                    p = this_doc_topic_counts * this_subtopic_counts * this_normalizer
+                    g = self.gaussians[token_id, :]
 
-                        subtopic_probs[subtopic] = p * g
-                        # print(subtopic_probs[subtopic])
-                        sampling_sum += subtopic_probs[subtopic]
+                    subtopic_probs = p*g
+                    sampling_sum = np.sum(subtopic_probs)
+                    subtopic_probs /= sampling_sum
+                    new_subtopic = np.random.choice(self.S, p=subtopic_probs)
+                    doc_subtopics[pos_i] = new_subtopic
 
-                    sample = s_uniform_variates[pos_i] * sampling_sum
-
-                    new_subtopic = 0
-                    while sample > subtopic_probs[new_subtopic]:
-                        sample -= subtopic_probs[new_subtopic]
-                        new_subtopic += 1
-                    # print(new_subtopic)
-
-                    # self.updateSubTopicsCounters(new_subtopic, subtopic_topic_counts,doc_subtopics_count, operation="+")
                     subtopic_topic_counts[new_subtopic] += 1
                     doc_subtopics_count[new_subtopic] += 1
-                    doc_subtopics[pos_i] = new_subtopic
 
             pass
         printime('Training was completed.', '')
@@ -271,3 +243,13 @@ class LDASTGibbsSampler:
             new_subtopic += 1
         print(new_subtopic)
         return new_subtopic
+
+    def print_all_topics(self, words_2_print):
+        top_words = []
+        for topic in range(self.K):
+            sorted_words = sorted(zip(self.subtopics_topics[:, topic], self.vocab), reverse=True)
+            words = " ".join([w for x, w in sorted_words[:words_2_print]])
+            print(words)
+            top_words.append(words)
+
+        return top_words
