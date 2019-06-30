@@ -30,8 +30,11 @@ class Documents(object):
         # Vocabulary size (length)
         self.vocab_size = 0
 
-        # Vocab's tokens id's
+        # Vocab's tokens id's | word->1
         self.tokens_ids = {}
+
+        # Reverse Vocab's tokens id's | 1->word
+        self.tokens_ids_rev = {}
 
         # Count all the words in the input documents before the stop-word filtering.
         self.words_num_before = 0
@@ -100,6 +103,9 @@ class Documents(object):
 
         # for saving mem
         del self.all_emb_words
+
+        # make reverse tokens_ids dict
+        self.tokens_ids_rev = {v: k for k, v in self.tokens_ids.items()}
 
         printime('Loading was done successfully.', '')
 

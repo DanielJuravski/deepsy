@@ -45,8 +45,8 @@ cdef class LDASTGibbsSampler:
     cdef double[:] topic_probs
     cdef double[:] topic_normalizers
     cdef float doc_smoothing
-    cdef float subtopic_smoothing
-    cdef float smoothing_times_centroids_size
+    cdef float z_subtopic_smoothing, s_subtopic_smoothing
+    cdef float z_smoothing_times_centroids_size, s_smoothing_times_centroids_size
 
     cdef double[:,:] gaussians
     cdef np.int64_t[:,:] most_similar_tokens
@@ -62,8 +62,10 @@ cdef class LDASTGibbsSampler:
         self.num_of_most_similar_tokens = params['num_of_most_similar_tokens']
         self.iterations = params['iterations']
         self.doc_smoothing = params['doc_smoothing']
-        self.subtopic_smoothing = params['subtopic_smoothing']
-        self.smoothing_times_centroids_size = self.subtopic_smoothing * self.vocab_size
+        self.z_subtopic_smoothing = params['z_subtopic_smoothing']
+        self.s_subtopic_smoothing = params['s_subtopic_smoothing']
+        self.z_smoothing_times_centroids_size = self.z_subtopic_smoothing * self.vocab_size
+        self.s_smoothing_times_centroids_size = self.s_subtopic_smoothing * self.vocab_size
         self.gaussians = gaussians
         self.most_similar_tokens = most_similar_tokens.copy()
 
@@ -93,7 +95,7 @@ cdef class LDASTGibbsSampler:
     @cython.nonecheck(False)
     def learn(self):
         cdef int old_topic, new_topic, word, topic, word_i, doc_length, document_i, iteration, old_subtopic, token_id, subtopic, new_subtopic, pos_i
-        cdef int i
+        cdef int i, clean_index
         cdef double sampling_sum = 0
         cdef double sample
         cdef long[:] word_topic_counts
@@ -120,11 +122,12 @@ cdef class LDASTGibbsSampler:
         cdef np.int64_t[:] token_id_most_similar_tokens
 
         for topic in range(self.K):
-            topic_normalizers[topic] = 1.0 / (self.topic_totals[topic] + self.smoothing_times_centroids_size)
+            topic_normalizers[topic] = 1.0 / (self.topic_totals[topic] + self.z_smoothing_times_centroids_size)
 
         for iteration in range(self.iterations):
             if iteration % 5 == 0:
-                printime('Training iteration', iteration)
+                self.print_all_topics(20)
+                printime('Sample iteration', iteration)
             for document_i in range(len(self.documents)):
                 if document_i % 100 == 0:
                     #printime('doc num', document_i)
@@ -155,12 +158,12 @@ cdef class LDASTGibbsSampler:
                     doc_topic_counts[old_topic] -= 1
 
                     topic_normalizers[old_topic] = 1.0 / (
-                                self.topic_totals[old_topic] + self.smoothing_times_centroids_size)
+                                self.topic_totals[old_topic] + self.z_smoothing_times_centroids_size)
 
                     sampling_sum = 0.0
                     for topic in range(self.K):
                         topic_probs[topic] = (doc_topic_counts[topic] + self.doc_smoothing) * \
-                                             (old_subtopic_topic_count[topic] + self.subtopic_smoothing) * \
+                                             (old_subtopic_topic_count[topic] + self.z_subtopic_smoothing) * \
                                              topic_normalizers[topic]
                         sampling_sum += topic_probs[topic]
 
@@ -178,7 +181,7 @@ cdef class LDASTGibbsSampler:
                     self.topic_totals[new_topic] += 1
                     doc_topic_counts[new_topic] += 1
                     topic_normalizers[new_topic] = 1.0 / (
-                                self.topic_totals[new_topic] + self.smoothing_times_centroids_size)
+                                self.topic_totals[new_topic] + self.z_smoothing_times_centroids_size)
 
 
                     ######################
@@ -195,12 +198,12 @@ cdef class LDASTGibbsSampler:
                         subtopic = token_id_most_similar_tokens[i]
 
                         p = (doc_topic_counts[new_topic] + self.doc_smoothing) * \
-                            (subtopic_topic_counts[subtopic] + self.subtopic_smoothing) / \
-                            (self.topic_totals[new_topic] + self.smoothing_times_centroids_size)
+                            (subtopic_topic_counts[subtopic] + self.s_subtopic_smoothing) / \
+                            (doc_length + self.s_smoothing_times_centroids_size)
 
                         g = self.gaussians[token_id, subtopic]
 
-                        prob = p*g
+                        prob = p*(g)
 
                         subtopic_probs[subtopic] = prob
                         sampling_sum += prob
@@ -218,9 +221,10 @@ cdef class LDASTGibbsSampler:
 
                     # clean subtopic_probs to zero
                     for i in range(self.num_of_most_similar_tokens):
-                        subtopic_probs[i] = 0
+                        clean_index = token_id_most_similar_tokens[i]
+                        subtopic_probs[clean_index] = 0
 
-        printime('Training was completed.', '')
+        printime('Sampling was completed.', '')
 
 
     def printArray(self, arr, info=None):
