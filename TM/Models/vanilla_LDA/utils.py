@@ -54,9 +54,6 @@ class Documents(object):
         # init K - num of topics
         self.K = K
 
-        # Count the co-appearance of each topic in the documents
-        self.topic_totals = np.zeros(self.K, dtype=int)
-
         # load stop-words
         self.loadStopWords(ignore_stop_words=False)
 
@@ -192,4 +189,6 @@ def i2w(index, vocab):
         if value == index:
             return key
 
+if __name__ == '__main__':
+    pass
 

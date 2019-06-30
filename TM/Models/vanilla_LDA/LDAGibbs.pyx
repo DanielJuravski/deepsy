@@ -81,8 +81,7 @@ cdef class LDAGibbsSampler:
 
         for iteration in range(self.iterations):
             if iteration % 10 == 0:
-                printime('Training iteration', iteration)
-                pass
+                printime('Sample iteration', iteration)
             for document_i in range(len(self.documents)):
                 document = self.documents[document_i]
                 doc_tokens = document.doc_tokens
@@ -125,7 +124,7 @@ cdef class LDAGibbsSampler:
 
                     doc_topics[word_i] = new_topic
 
-    printime('Training was completed.', '')
+        printime('Sampling was completed.', '')
 
 
     def print_all_topics(self, words_2_print):

@@ -2,7 +2,7 @@ from datetime import datetime
 import pyximport
 pyximport.install()
 
-from deepsy.LDA.LDAST import LDAGibbs
+from deepsy.TM.Models.vanilla_LDA import LDAGibbs
 from utils import Documents
 from utils import printime
 
@@ -45,7 +45,7 @@ def main():
     keys_file = 'keys.txt'
 
     data = Documents(documents_dir_name='/home/daniel/deepsy/TM/client_5_mini_turns/',
-                     stop_words_dir_name='/home/daniel/deepsy/TM/Models/STOP_WORDS/',
+                     stop_words_dir_name='/home/daniel/deepsy/TM/STOP_WORDS/',
                      K=K)
 
     model = LDAGibbs.LDAGibbsSampler(data, params)
