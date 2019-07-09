@@ -2,10 +2,12 @@ from datetime import datetime
 from utils import Documents
 from utils import Vectors
 from utils import printime
+from config import params
 from sklearn.metrics.pairwise import euclidean_distances
 import numpy as np
 from scipy.special import softmax
-# import LDASTGibbs
+import os
+import matplotlib.pyplot as plt
 
 
 import pyximport
@@ -36,27 +38,28 @@ def getVecDists(emb):
     return dist
 
 
-def getMostSimilar(gaussians, MOST_SIMILAR_TOKENS):
+def getMostSimilar(gaussians, params):
     """
     create list of data tokens, and their most similar words by the pre-computed gaussians matrix
     :param gaussians:
     :return:
     """
-    msg = 'Sorting ' + str(MOST_SIMILAR_TOKENS) + ' most similar tokens ...'
+    num_of_most_similar_tokens = params['num_of_most_similar_tokens']
+    msg = 'Sorting ' + str(num_of_most_similar_tokens) + ' most similar tokens ...'
     printime(msg, '')
 
     # shift can be +1 because starts from index 1 and not 0
     shift = 0
     most_similar = []
     for token in gaussians:
-        token_most_similar = (-token).argsort()[shift:MOST_SIMILAR_TOKENS+shift]
+        token_most_similar = (-token).argsort()[shift:num_of_most_similar_tokens+shift]
         most_similar.append(token_most_similar)
 
     most_similar = np.asarray(most_similar)
     return most_similar
 
 
-def getNormalProbs(emb):
+def getNormalProbs(emb, params):
     """
     number of centroids is as the size of vocab
     make n*n matrix and calculate every cell gaussian probability
@@ -65,77 +68,101 @@ def getNormalProbs(emb):
     """
     printime('Generating Normal Probabilities ...', '')
     values = []
-
-    # for idx, (word, value) in enumerate(emb.vectors.items()):
-    #     words.append(word)
-    #     values.append(value)
+    sigma = params['sigma']
 
     for word in emb.data_vocab:
         values.append(emb.vectors[word])
     values_np = np.asarray(values)
 
+    # for mem saving
+    del emb.vectors
+
     values = np.vstack(values_np)
     dist = euclidean_distances(values)
-    sigma = 2
     word_word_probs = softmax(-dist/sigma, axis=1)
 
     return word_word_probs
 
 
-def getGaussians(emb, MOST_SIMILAR_TOKENS):
+def getGaussians(emb, params):
     # dists = getVecDists(emb)
-    gaussians = getNormalProbs(emb)
+    gaussians = getNormalProbs(emb, params)
 
-    most_similar = getMostSimilar(gaussians, MOST_SIMILAR_TOKENS)
-
-    # for mem saving
-    del emb.vectors
+    most_similar = getMostSimilar(gaussians, params)
 
     return gaussians, most_similar
+
+
+def write2file(topics_top_words, file_name):
+    with open(file_name, 'w') as f:
+        for line in topics_top_words:
+            f.write(line)
+            f.write('\n')
+
+
+def writeInfo(info_file, params, run_time, data):
+    with open(info_file, 'w') as f:
+        # params
+        for param in params.items():
+            line = str(param[0]) + ': ' + str(param[1]) + '\n'
+            f.writelines(line)
+
+        # data statistics
+        data_stats = []
+        f.writelines('\n')
+        data_stats.append("Num of documents: {0}\n".format(len(data.documents)))
+        data_stats.append("Num of words before droping: {0}\n".format(data.words_num_before))
+        data_stats.append("Num of words after droping: {0}\n".format(data.words_num_after))
+        data_stats.append("Num of tokens: {0}\n".format(data.vocab_size))
+        data_stats.append("Num of stop words: {0}\n".format(len(data.stop_words_set)))
+        data_stats.append("Num of initially emb vocab: {0}\n".format(data.all_emb_words_len))
+        for stat in data_stats:
+            f.writelines(stat)
+
+        # times
+        f.writelines('\n')
+        line = 'Running time: {0}\n'.format(run_time)
+        f.writelines(line)
+
+
+def generateOutputFiles():
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    directory = 'logs/' + str(timestamp)
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    info_file = directory + '/info.txt'
+    keys_file = directory + '/keys.txt'
+
+    return info_file, keys_file, directory
+
+
+def plotSwaps(Z_swap, S_swap, directory):
+    plt.plot(Z_swap, label='Z')
+    plt.plot(S_swap, label='S')
+    plt.xlabel('Iteration')
+    plt.ylabel('Swaps')
+    plt.legend(loc='upper right')
+    plt.savefig(directory+'/swaps.png')
 
 
 def main():
     script_starttime = datetime.now()
 
-    # params
-    params = {}
-    K = int(50)
-    doc_smoothing = 0.5  # alpha (theta)
-    z_subtopic_smoothing = 0.01  # beta (phi)
-    s_subtopic_smoothing = 0.01  # beta (phi)
-    subtopic_smoothing = 0.01  # for py_ version
-    iterations = 10000
-    topic_num_words_to_print = 20
-    num_of_most_similar_tokens = 100
+    info_file, keys_file, directory = generateOutputFiles()
 
-    params['K'] = K
-    params['doc_smoothing'] = doc_smoothing
-    params['z_subtopic_smoothing'] = z_subtopic_smoothing
-    params['s_subtopic_smoothing'] = s_subtopic_smoothing
-    params['subtopic_smoothing'] = subtopic_smoothing
-    params['iterations'] = iterations
-    params['topic_num_words_to_print'] = topic_num_words_to_print
-    params['num_of_most_similar_tokens'] = num_of_most_similar_tokens
+    data = Documents(documents_dir_name=params['DOCUMENTS_DIR'],
+                     stop_words_dir_name=params['STOP_WORDS_DIR'],
+                     K=params['K'],
+                     emb_vocab_file_name=params['VOCAB_FILE'])
 
-    VOCAB_FILE = '/home/daniel/Documents/he_emb/ron_shemesh/words_list.txt'
-    EMB_FILE = '/home/daniel/Documents/he_emb/ron_shemesh/words_vectors.npy'
-
-    # emb = Vectors(emb_file_path='/home/daniel/Documents/Word_Embeddings/Glove/glove.6B.50d.txt')
-
-    data = Documents(documents_dir_name='/home/daniel/deepsy/TM/client_5_mini_turns/',
-                     #documents_dir_name = 'Generated_Data/',
-                     #documents_dir_name='/home/daniel/deepsy/TM/tmp/samples/',
-                     stop_words_dir_name='/home/daniel/deepsy/TM/STOP_WORDS/',
-                     K=K,
-                     emb_vocab_file_name=VOCAB_FILE)
-
-    emb = Vectors(emb_file_path=EMB_FILE,
+    emb = Vectors(emb_file_path=params['EMB_FILE'],
                   emb_format='npy',
-                  vocab_file_path=VOCAB_FILE,
+                  vocab_file_path=params['VOCAB_FILE'],
                   data_vocab=data.tokens_ids)
 
-    gaussians, most_similar_tokens = getGaussians(emb, num_of_most_similar_tokens)
-    # gaussians = None
+    gaussians, most_similar_tokens = getGaussians(emb, params)
     S = emb.num_of_vectors
     params['S'] = S
 
@@ -158,8 +185,13 @@ def main():
     run_time = datetime.now() - script_starttime
     print("Run time: {0}".format(run_time))
 
-    topics_top_words = model.print_all_topics(topic_num_words_to_print)
+    topics_top_words = model.print_all_topics(params['topic_num_words_to_print'])
+    write2file(topics_top_words, keys_file)
 
+    writeInfo(info_file, params, run_time, data)
+
+    Z_swap, S_swap, S_samples_index = model.getStats()
+    plotSwaps(Z_swap, S_swap, directory)
 
 if __name__ == '__main__':
     main()

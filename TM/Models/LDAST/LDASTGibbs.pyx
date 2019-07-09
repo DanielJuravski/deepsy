@@ -54,6 +54,11 @@ cdef class LDASTGibbsSampler:
     documents = []
     vocab = []
 
+    # for statistocs
+    Z_swap = []
+    S_swap = []
+    S_samples_index = []
+
     def __init__(self, data, params, gaussians, most_similar_tokens):
         self.vocab.extend(data.vocab)
         self.vocab_size = data.vocab_size
@@ -95,12 +100,12 @@ cdef class LDASTGibbsSampler:
     @cython.nonecheck(False)
     def learn(self):
         cdef int old_topic, new_topic, word, topic, word_i, doc_length, document_i, iteration, old_subtopic, token_id, subtopic, new_subtopic, pos_i
-        cdef int i, clean_index
+        cdef int i, clean_index, j
         cdef double sampling_sum = 0
         cdef double sample
         cdef long[:] word_topic_counts
 
-        cdef long[:] doc_tokenstopic_tot
+        cdef long[:] doc_tokens
         cdef long[:] doc_topics
         cdef long[:] doc_subtopics
         cdef long[:] doc_topic_counts
@@ -120,6 +125,11 @@ cdef class LDASTGibbsSampler:
         cdef double[:] p_vec
         cdef this_doc_topic_counts, this_subtopic_counts, this_normalizer
         cdef np.int64_t[:] token_id_most_similar_tokens
+
+        cdef double[:,:] gaussians = self.gaussians
+
+        cdef int Z_swap_count = 0
+        cdef int S_swap_count = 0
 
         for topic in range(self.K):
             topic_normalizers[topic] = 1.0 / (self.topic_totals[topic] + self.z_smoothing_times_centroids_size)
@@ -182,7 +192,10 @@ cdef class LDASTGibbsSampler:
                     doc_topic_counts[new_topic] += 1
                     topic_normalizers[new_topic] = 1.0 / (
                                 self.topic_totals[new_topic] + self.z_smoothing_times_centroids_size)
-
+                    
+                    # This check is for statistics
+                    if new_topic != old_topic:
+                        Z_swap_count += 1
 
                     ######################
                     #      sample S      #
@@ -201,9 +214,9 @@ cdef class LDASTGibbsSampler:
                             (subtopic_topic_counts[subtopic] + self.s_subtopic_smoothing) / \
                             (doc_length + self.s_smoothing_times_centroids_size)
 
-                        g = self.gaussians[token_id, subtopic]
+                        g = gaussians[token_id, subtopic]
 
-                        prob = p*(g)
+                        prob = p * g
 
                         subtopic_probs[subtopic] = prob
                         sampling_sum += prob
@@ -223,6 +236,24 @@ cdef class LDASTGibbsSampler:
                     for i in range(self.num_of_most_similar_tokens):
                         clean_index = token_id_most_similar_tokens[i]
                         subtopic_probs[clean_index] = 0
+
+                    # This check is for statistics.
+                    # 1. count of subtioc has changes.
+                    # 2. index of samples subtopic
+                    if new_subtopic != old_subtopic:
+                        S_swap_count += 1
+                    
+                    #j = 0
+                    #while token_id_most_similar_tokens[i] != new_subtopic:
+                    #    j += 1
+                    #self.S_samples_index.append(j)
+
+            # for statistics
+            self.Z_swap.append(Z_swap_count)
+            self.S_swap.append(S_swap_count)
+            Z_swap_count = 0
+            S_swap_count = 0
+
 
         printime('Sampling was completed.', '')
 
@@ -246,3 +277,15 @@ cdef class LDASTGibbsSampler:
             top_words.append(words)
 
         return top_words
+
+
+    def getStats(self):
+        return self.Z_swap, self.S_swap, self.S_samples_index
+
+    cdef getIndex(self, arr, arr_len, val):
+        cdef int i=0
+        while arr[i] != val:
+            i += 1
+        return i
+
+
