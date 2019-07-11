@@ -5,6 +5,7 @@ pyximport.install()
 from deepsy.TM.Models.vanilla_LDA import LDAGibbs
 from utils import Documents
 from utils import printime
+import matplotlib.pyplot as plt
 
 
 def write2file(topics_top_words, file_name):
@@ -22,6 +23,14 @@ def writeInfo(info_file, params, run_time):
 
         line = 'Running time:\t{0}\n'.format(run_time)
         f.writelines(line)
+
+
+def plotSwaps(Z_swap):
+    plt.plot(Z_swap, label='Z')
+    plt.xlabel('Iteration')
+    plt.ylabel('Swaps')
+    plt.legend(loc='upper right')
+    plt.savefig('swaps.png')
 
 
 def main():
@@ -45,6 +54,7 @@ def main():
     keys_file = 'keys.txt'
 
     data = Documents(documents_dir_name='/home/daniel/deepsy/TM/client_5_mini_turns/',
+                     #documents_dir_name='/home/daniel/Documents/Data_Sets/NIPS_papers/docs_mini/',
                      stop_words_dir_name='/home/daniel/deepsy/TM/STOP_WORDS/',
                      K=K)
 
@@ -65,7 +75,8 @@ def main():
 
     writeInfo(info_file, params, run_time)
 
-    pass
+    Z_swap = model.getStats()
+    plotSwaps(Z_swap)
 
 
 if __name__ == '__main__':

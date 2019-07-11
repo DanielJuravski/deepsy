@@ -34,6 +34,9 @@ cdef class LDAGibbsSampler:
     documents = []
     vocab = []
 
+    # for statistics
+    Z_swap = []
+
     def __init__(self, data, params):
         self.vocab.extend(data.vocab)
         self.vocab_size = data.vocab_size
@@ -74,6 +77,8 @@ cdef class LDAGibbsSampler:
         cdef double[:] uniform_variates
         cdef double[:] topic_normalizers = np.zeros(self.K, dtype=float)
         cdef double[:] topic_probs = np.zeros(self.K, dtype=float)
+
+        cdef int Z_swap_count = 0
 
         # calculate the denominator for the p_z_wt
         for topic in range(self.K):
@@ -124,6 +129,14 @@ cdef class LDAGibbsSampler:
 
                     doc_topics[word_i] = new_topic
 
+                    # This check is for statistics
+                    if new_topic != old_topic:
+                        Z_swap_count += 1
+
+            # for statistics
+            self.Z_swap.append(Z_swap_count)
+            Z_swap_count = 0
+
         printime('Sampling was completed.', '')
 
 
@@ -136,6 +149,10 @@ cdef class LDAGibbsSampler:
             top_words.append(words)
 
         return top_words
+
+
+    def getStats(self):
+        return self.Z_swap
 
 
 
