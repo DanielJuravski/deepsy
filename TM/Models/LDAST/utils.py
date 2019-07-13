@@ -48,6 +48,9 @@ class Documents(object):
         # In stop_words_dir_name there are files that contain the stop-words. Stop-words should not be tokenized.
         self.stop_words_dir_name = stop_words_dir_name
 
+        # list of stop_words files name
+        self.stop_words_files_names = []
+
         # txt file with all words that got emb. will bw loaded to self.all_emb_words
         # if there is a word in data and not in that txt, drop it.
         self.emb_vocab_file_name = emb_vocab_file_name
@@ -156,13 +159,16 @@ class Documents(object):
             dir = os.fsencode(self.stop_words_dir_name)
             for file in os.listdir(dir):
                 file_name = os.fsdecode(file)
-                file_full_path = self.stop_words_dir_name + str(file_name)
-                printime('Loading stop-words:', file_name)
+                # load only files that do not start with "_"
+                if str(file_name)[0] != '_':
+                    self.stop_words_files_names.append(str(file_name))
+                    file_full_path = self.stop_words_dir_name + str(file_name)
+                    printime('Loading stop-words:', file_name)
 
-                with open(file_full_path, 'r') as f:
-                    words = f.read().split()
-                    for word in words:
-                        self.stop_words_set.add(word)
+                    with open(file_full_path, 'r') as f:
+                        words = f.read().split()
+                        for word in words:
+                            self.stop_words_set.add(word)
 
         # load emb words for future filtering
         word_dict = {}

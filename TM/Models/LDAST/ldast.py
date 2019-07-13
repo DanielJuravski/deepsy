@@ -116,8 +116,14 @@ def writeInfo(info_file, params, run_time, data):
         for stat in data_stats:
             f.writelines(stat)
 
+        # stop words files
+        print("Stop words were loaded from:")
+        for file_name in data.stop_words_files_names:
+            f.writelines('\n')
+            f.writelines(file_name)
+
         # times
-        f.writelines('\n')
+        f.writelines('\n\n')
         line = 'Running time: {0}\n'.format(run_time)
         f.writelines(line)
 
