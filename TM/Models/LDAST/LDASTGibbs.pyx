@@ -35,12 +35,14 @@ class Document:
 cdef class LDASTGibbsSampler:
     cdef long[:] topic_totals
     cdef long[:,:] subtopics_topics
+    cdef long[:,:] tokens_subtopics
 
     cdef int K
     cdef int S
     cdef int num_of_most_similar_tokens
     cdef int vocab_size
     cdef int iterations
+    cdef int topic_num_words_to_print
 
     cdef double[:] topic_probs
     cdef double[:] topic_normalizers
@@ -69,6 +71,7 @@ cdef class LDASTGibbsSampler:
         self.doc_smoothing = params['doc_smoothing']
         self.z_subtopic_smoothing = params['z_subtopic_smoothing']
         self.s_subtopic_smoothing = params['s_subtopic_smoothing']
+        self.topic_num_words_to_print = params['topic_num_words_to_print']
         self.z_smoothing_times_centroids_size = self.z_subtopic_smoothing * self.vocab_size
         self.s_smoothing_times_centroids_size = self.s_subtopic_smoothing * self.vocab_size
         self.gaussians = gaussians
@@ -76,6 +79,7 @@ cdef class LDASTGibbsSampler:
 
         self.topic_totals = np.zeros(self.K, dtype=int)
         self.subtopics_topics = np.zeros((self.S, self.K), dtype=int)
+        self.tokens_subtopics = np.zeros((self.vocab_size, self.S), dtype=int)
 
     def add_document(self, doc):
         cdef int token_id
@@ -87,10 +91,12 @@ cdef class LDASTGibbsSampler:
         for i in range(len(doc.doc_tokens)):
             topic = doc.doc_topics[i]
             subtopic = doc.doc_subtopics[i]
+            token = doc.doc_tokens[i]
 
             # Update counts:
             self.topic_totals[topic] += 1
             self.subtopics_topics[subtopic, topic] += 1
+            self.tokens_subtopics[token, subtopic] += 1
             doc.doc_topic_counts[topic] += 1
             doc.doc_subtopics_counts[subtopic] += 1
 
@@ -204,6 +210,7 @@ cdef class LDASTGibbsSampler:
                     # remove the effect of this token
                     subtopic_topic_counts[old_subtopic] -= 1
                     doc_subtopics_count[old_subtopic] -= 1
+                    self.tokens_subtopics[token_id, old_subtopic] -= 1
 
                     sampling_sum = 0.0
                     token_id_most_similar_tokens = self.most_similar_tokens[token_id]
@@ -230,6 +237,7 @@ cdef class LDASTGibbsSampler:
 
                     subtopic_topic_counts[new_subtopic] += 1
                     doc_subtopics_count[new_subtopic] += 1
+                    self.tokens_subtopics[token_id, new_subtopic] += 1
                     doc_subtopics[pos_i] = new_subtopic
 
                     # clean subtopic_probs to zero
@@ -282,10 +290,34 @@ cdef class LDASTGibbsSampler:
     def getStats(self):
         return self.Z_swap, self.S_swap, self.S_samples_index
 
-    cdef getIndex(self, arr, arr_len, val):
-        cdef int i=0
-        while arr[i] != val:
-            i += 1
-        return i
+
+    def getMatrices(self):
+        # make tokens_topic counting
+        tokens_topic = np.zeros((self.vocab_size, self.K), dtype=int)
+        for document_i in range(len(self.documents)):
+            document = self.documents[document_i]
+            doc_tokens = document.doc_tokens
+            doc_topics = document.doc_topics
+            doc_length = len(doc_tokens)
+            for pos_i in range(doc_length):
+                token_id = doc_tokens[pos_i]
+                topic = doc_topics[pos_i]
+                tokens_topic[token_id, topic] += 1
+
+        tokens_topic_printed = self.print_all_tokens_topics(tokens_topic, self.topic_num_words_to_print)
+
+        return (self.subtopics_topics, self.tokens_subtopics, tokens_topic, tokens_topic_printed)
 
 
+    def print_all_tokens_topics(self, mat, words_2_print):
+        # additional function beacuse tokens_topic is a local var. I dont want to make it global for time reasons.
+        print("###########################################################")
+        print("Topics' tokens:")
+        top_words = []
+        for topic in range(self.K):
+            sorted_words = sorted(zip(mat[:, topic], self.vocab), reverse=True)
+            words = " ".join([w for x, w in sorted_words[:words_2_print]])
+            print(words)
+            top_words.append(words)
+
+        return top_words

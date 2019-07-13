@@ -8,6 +8,7 @@ import numpy as np
 from scipy.special import softmax
 import os
 import matplotlib.pyplot as plt
+import pickle
 
 
 import pyximport
@@ -25,10 +26,6 @@ def getVecDists(emb):
     """
     printime('Generating Dists Gaussians ...', '')
     values = []
-
-    # for idx, (word, value) in enumerate(emb.vectors.items()):
-    #     words.append(word)
-    #     values.append(value)
 
     for word in emb.data_vocab:
         values.append(emb.vectors[word])
@@ -134,8 +131,9 @@ def generateOutputFiles():
 
     info_file = directory + '/info.txt'
     keys_file = directory + '/keys.txt'
+    tokens_keys_file = directory + '/tokens_keys.txt'
 
-    return info_file, keys_file, directory
+    return info_file, keys_file, tokens_keys_file, directory
 
 
 def plotSwaps(Z_swap, S_swap, directory):
@@ -147,10 +145,19 @@ def plotSwaps(Z_swap, S_swap, directory):
     plt.savefig(directory+'/swaps.png')
 
 
+def saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_count):
+    np.save(directory + '/subtopic_topic.npy', subtopic_topic_mat.base)
+    np.save(directory + '/tokens_subtopics.npy', tokens_subtopics_mat.base)
+    np.save(directory + '/tokens_topic.npy', tokens_topic)
+
+    with open(directory + '/tokens_count.pkl', 'wb') as f:
+        pickle.dump(tokens_count, f)
+
+
 def main():
     script_starttime = datetime.now()
 
-    info_file, keys_file, directory = generateOutputFiles()
+    info_file, keys_file, tokens_keys_file, directory = generateOutputFiles()
 
     data = Documents(documents_dir_name=params['DOCUMENTS_DIR'],
                      stop_words_dir_name=params['STOP_WORDS_DIR'],
@@ -185,13 +192,21 @@ def main():
     run_time = datetime.now() - script_starttime
     print("Run time: {0}".format(run_time))
 
-    topics_top_words = model.print_all_topics(params['topic_num_words_to_print'])
-    write2file(topics_top_words, keys_file)
+    topics_top_centroids = model.print_all_topics(params['topic_num_words_to_print'])
+    write2file(topics_top_centroids, keys_file)
 
     writeInfo(info_file, params, run_time, data)
 
     Z_swap, S_swap, S_samples_index = model.getStats()
     plotSwaps(Z_swap, S_swap, directory)
+
+    subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_topic_printed = model.getMatrices()
+    write2file(tokens_topic_printed, tokens_keys_file)
+    # for extended info
+    saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, data.tokens_count)
+
+    pass
+
 
 if __name__ == '__main__':
     main()
