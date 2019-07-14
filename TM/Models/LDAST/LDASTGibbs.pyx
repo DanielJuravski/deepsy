@@ -291,7 +291,7 @@ cdef class LDASTGibbsSampler:
         return self.Z_swap, self.S_swap, self.S_samples_index
 
 
-    def getMatrices(self):
+    def getObjects(self):
         # make tokens_topic counting
         tokens_topic = np.zeros((self.vocab_size, self.K), dtype=int)
         for document_i in range(len(self.documents)):

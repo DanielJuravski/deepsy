@@ -151,13 +151,16 @@ def plotSwaps(Z_swap, S_swap, directory):
     plt.savefig(directory+'/swaps.png')
 
 
-def saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_count):
+def saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_count, tokens_ids_rev):
     np.save(directory + '/subtopic_topic.npy', subtopic_topic_mat.base)
     np.save(directory + '/tokens_subtopics.npy', tokens_subtopics_mat.base)
     np.save(directory + '/tokens_topic.npy', tokens_topic)
 
     with open(directory + '/tokens_count.pkl', 'wb') as f:
         pickle.dump(tokens_count, f)
+
+    with open(directory + '/tokens_ids_rev.pkl', 'wb') as f:
+        pickle.dump(tokens_ids_rev, f)
 
 
 def main():
@@ -206,10 +209,10 @@ def main():
     Z_swap, S_swap, S_samples_index = model.getStats()
     plotSwaps(Z_swap, S_swap, directory)
 
-    subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_topic_printed = model.getMatrices()
+    subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, tokens_topic_printed = model.getObjects()
     write2file(tokens_topic_printed, tokens_keys_file)
     # for extended info
-    saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, data.tokens_count)
+    saveMatrices(directory, subtopic_topic_mat, tokens_subtopics_mat, tokens_topic, data.tokens_count, data.tokens_ids_rev)
 
     pass
 
