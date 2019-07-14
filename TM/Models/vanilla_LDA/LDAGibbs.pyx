@@ -155,4 +155,7 @@ cdef class LDAGibbsSampler:
         return self.Z_swap
 
 
+    def getObjects(self):
+        return self.word_topics
+
 

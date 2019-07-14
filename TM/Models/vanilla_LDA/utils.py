@@ -135,13 +135,15 @@ class Documents(object):
             dir = os.fsencode(self.stop_words_dir_name)
             for file in os.listdir(dir):
                 file_name = os.fsdecode(file)
-                file_full_path = self.stop_words_dir_name + str(file_name)
-                printime('Loading stop-words:', file_name)
+                # load only files that do not start with "_"
+                if str(file_name)[0] != '_':
+                    file_full_path = self.stop_words_dir_name + str(file_name)
+                    printime('Loading stop-words:', file_name)
 
-                with open(file_full_path, 'r') as f:
-                    words = f.read().split()
-                    for word in words:
-                        self.stop_words_set.add(word)
+                    with open(file_full_path, 'r') as f:
+                        words = f.read().split()
+                        for word in words:
+                            self.stop_words_set.add(word)
 
     def statistics(self):
         """

@@ -6,6 +6,8 @@ from deepsy.TM.Models.vanilla_LDA import LDAGibbs
 from utils import Documents
 from utils import printime
 import matplotlib.pyplot as plt
+import pickle
+import numpy as np
 
 
 def write2file(topics_top_words, file_name):
@@ -33,6 +35,12 @@ def plotSwaps(Z_swap):
     plt.savefig('swaps.png')
 
 
+def saveObject(model):
+    word_topics = model.getObjects()
+
+    np.save('word_topics.npy', word_topics.base)
+
+
 def main():
     script_starttime = datetime.now()
 
@@ -41,7 +49,7 @@ def main():
     K = int(50)
     doc_smoothing = 0.5  # alpha (theta)
     word_smoothing = 0.01  # beta (phi)
-    iterations = 1000
+    iterations = 1
     topic_num_words_to_print = 20
 
     params['K'] = K
@@ -77,6 +85,9 @@ def main():
 
     Z_swap = model.getStats()
     plotSwaps(Z_swap)
+
+    # save objects for 'analyzeMats.py' usage
+    saveObject(model)
 
 
 if __name__ == '__main__':
