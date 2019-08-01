@@ -3,6 +3,13 @@ import os
 import sys
 from collections import defaultdict, Counter
 
+########################## Params - Start ##########################
+TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
+WORD_FREQ_THRESHOLD = 9
+FILTER_BY = 'lemma'
+RARE_WORDS_FILE_NAME = 'rare.txt'
+########################## Params - End   ##########################
+
 # Transcription json file
 PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
 PLAIN_TEXT_PARSED_LEMMA = 'plainText_parsed_lemma'
@@ -18,26 +25,25 @@ PLAIN_TEXT_DETAILS_FILE_PATH = '/tmp/plainTextDetails.txt'
 PLAIN_TEXT_PARSED_FILE_PATH = '/tmp/plainTextParsed.txt'
 PLAIN_TEXT_WORD_SPLITED_FILE_PATH = '/tmp/plainTextWordSplited.txt'
 
-TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
-WORD_FREQ_THRESHOLD = 10
-RARE_WORDS_FILE_NAME = 'rare_words.txt'
-FILTER_BY = 'word'
-
 
 def getOptions():
-    trans_dir = word_freq_threshold = rare_words_file_name = filter_by = None
-
     if '--input-dir' in sys.argv:
         option_i = sys.argv.index('--input-dir')
         trans_dir = sys.argv[option_i + 1]
+    else:
+        trans_dir = TRANS_DIR
 
     if '--output' in sys.argv:
         option_i = sys.argv.index('--output')
         rare_words_file_name = sys.argv[option_i + 1]
+    else:
+        rare_words_file_name = RARE_WORDS_FILE_NAME
 
     if '--threshold' in sys.argv:
         option_i = sys.argv.index('--threshold')
         word_freq_threshold = int(sys.argv[option_i + 1])
+    else:
+        word_freq_threshold = WORD_FREQ_THRESHOLD
 
     if '--filter-by' in sys.argv:
         option_i = sys.argv.index('--filter-by')
@@ -45,6 +51,8 @@ def getOptions():
         if filter_by != 'word' and filter_by != 'lemma':
             print("ERROR: filter_by value must be 'word' or 'lemma'.")
             print("Exiting.")
+    else:
+        filter_by = FILTER_BY
 
     if trans_dir == None or \
         word_freq_threshold == None or \

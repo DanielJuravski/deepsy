@@ -3,6 +3,12 @@ import os
 import sys
 from collections import defaultdict, Counter
 
+########################## Params - Start ##########################
+TRANS_DIR = '/home/daniel/deepsy/TM/client_5_mini_turns/'
+WORD_FREQ_THRESHOLD = 0.9
+RARE_WORDS_FILE_NAME = 'common_strings_' + str(WORD_FREQ_THRESHOLD) + '.txt'
+########################## Params - End   ##########################
+
 # Transcription json file
 PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
 PLAIN_TEXT_PARSED_LEMMA = 'plainText_parsed_lemma'
@@ -18,44 +24,35 @@ PLAIN_TEXT_DETAILS_FILE_PATH = '/tmp/plainTextDetails.txt'
 PLAIN_TEXT_PARSED_FILE_PATH = '/tmp/plainTextParsed.txt'
 PLAIN_TEXT_WORD_SPLITED_FILE_PATH = '/tmp/plainTextWordSplited.txt'
 
-TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
-WORD_FREQ_THRESHOLD = 10
-RARE_WORDS_FILE_NAME = 'rare_words.txt'
-FILTER_BY = 'word'
-
 
 def getOptions():
-    documents_dir = common_threshold = common_words_file_name = filter_by = None
-
     if '--input-dir' in sys.argv:
         option_i = sys.argv.index('--input-dir')
         documents_dir = sys.argv[option_i + 1]
+    else:
+        documents_dir = TRANS_DIR
 
     if '--output' in sys.argv:
         option_i = sys.argv.index('--output')
         common_words_file_name = sys.argv[option_i + 1]
+    else:
+        common_words_file_name = RARE_WORDS_FILE_NAME
 
     if '--threshold' in sys.argv:
         option_i = sys.argv.index('--threshold')
         common_threshold = float(sys.argv[option_i + 1])
-
-    if '--filter-by' in sys.argv:
-        option_i = sys.argv.index('--filter-by')
-        filter_by = sys.argv[option_i + 1]
-        if filter_by != 'word' and filter_by != 'lemma':
-            print("ERROR: filter_by value must be 'word' or 'lemma'.")
-            print("Exiting.")
+    else:
+        common_threshold = WORD_FREQ_THRESHOLD
 
     if documents_dir == None or \
         common_threshold == None or \
-        common_words_file_name == None or \
-        filter_by == None:
+        common_words_file_name == None: # or \
         print("Usage:\n"
-              "python3 rareWords.py --input-dir $DIR --output $FILE_NAME --threshold $THRESHOLD --filter-by <word/lemma>\n"
+              "python3 commonWords.py --input-dir $DIR --output $FILE_NAME --threshold $THRESHOLD \n"
               "Exiting.")
         sys.exit()
 
-    return documents_dir, common_threshold, common_words_file_name, filter_by
+    return documents_dir, common_threshold, common_words_file_name
 
 
 def iterate_dir(documents_dir, common_words_dict):
@@ -77,9 +74,9 @@ def iterate_dir(documents_dir, common_words_dict):
                 for word in line.split():
                     doc_data.append(word)
 
-        uniqe_doc_data = set(doc_data)
+        #uniqe_doc_data = set(doc_data)
 
-        for word in uniqe_doc_data:
+        for word in doc_data:
             common_words_dict[word] += 1
 
     return common_words_dict, dir_size
@@ -107,9 +104,11 @@ if __name__ == '__main__':
     # The documents here are in the same template that are imported into the Topic Modeling alg.
     # run without params for Usage print.
     # threshold between 0<=x<=1
+    # The filter_by flag is not relevant, since the string counting is over the already created documents.
+    # (We don't know if those documents created from words or lemmas)
 
     # initialization
-    documents_dir, common_threshold, common_words_file_name, filter_by = getOptions()
+    documents_dir, common_threshold, common_words_file_name = getOptions()
     common_words_dict = defaultdict(int)
 
     # get all words in the docs
