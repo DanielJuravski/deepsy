@@ -48,6 +48,7 @@ def extract_by_speaker(src_json_data):
                 # take only the TURN_SPEAKER text, the rest will not be written
                 if mini_dialog_turn_speaker == TURN_SPEAKER:
                     text = mini_dialog_turn[TEXT_TYPE]
+                    dialog_turn_text += ' '
                     dialog_turn_text += text
             text_list.append(dialog_turn_text)
 
@@ -103,11 +104,12 @@ def writeDynamicTurns2File(trans_file_name, text_list):
         # get number of words
         turn_len_sum += len(turn.split())
         text_to_print += turn
+        text_to_print += ' '
 
         if turn_len_sum > NUM_OF_WORDS:
             file_name = 'Dirs_of_Docs/{0}/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
 
-            with open(file_name, 'a') as f:
+            with open(file_name, 'w') as f:
                 f.write(text_to_print)
 
             file_i += 1
@@ -125,14 +127,10 @@ if __name__ == '__main__':
     # That script extracts the defined json transcriptions to pure text.
     # That for activating the MALLET TM tool on the pure text.
 
-    # TODO: fix main
-    # TODO: output dir/file name as given parameter
-    # TODO: think if there is a need to rm -rf the output dir content
-
-    directory = os.fsencode(TRANS_DIR)
-
+    # create the dir where the created documents will be plotted to
     createOutputDir()
 
+    directory = os.fsencode(TRANS_DIR)
     for file in os.listdir(directory):
         file_name = os.fsdecode(file)
         json_src_file_name = TRANS_DIR + file_name
@@ -145,5 +143,4 @@ if __name__ == '__main__':
         # write2File_client_to_file(file_name, client_text_list)
         # write4turns2File(file_name, client_text_list)
         writeDynamicTurns2File(file_name, text_list)
-    pass
 
