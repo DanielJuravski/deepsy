@@ -8,3 +8,7 @@ logs/
 **keys.txt
 **info.txt
 **swaps.png
+
+Dirs_of_Docs
+STOP_WORDS
+pre_process/**/*.txt
