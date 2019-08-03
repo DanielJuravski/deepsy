@@ -107,7 +107,7 @@ def writeDynamicTurns2File(trans_file_name, text_list):
         text_to_print += ' '
 
         if turn_len_sum > NUM_OF_WORDS:
-            file_name = 'Dirs_of_Docs/{0}/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
+            file_name = 'Dirs_of_Docs/{0}/Documents/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
 
             with open(file_name, 'w') as f:
                 f.write(text_to_print)
@@ -118,7 +118,7 @@ def writeDynamicTurns2File(trans_file_name, text_list):
 
 
 def createOutputDir():
-    output_dir = 'Dirs_of_Docs/{0}'.format(OUTPUT_DIR_NAME)
+    output_dir = 'Dirs_of_Docs/{0}/Documents'.format(OUTPUT_DIR_NAME)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
