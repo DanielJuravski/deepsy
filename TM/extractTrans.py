@@ -4,8 +4,8 @@ import os
 ########################## Params - Start ##########################
 TURN_SPEAKER = 'Client'
 TEXT_TYPE = 'plainText_parsed_word'
-NUM_OF_WORDS = 500
-OUTPUT_DIR_NAME = 'c_500_words'
+NUM_OF_WORDS = 1000
+OUTPUT_DIR_NAME = 'c_sessions'
 ########################## Params - End   ##########################
 
 
@@ -56,8 +56,7 @@ def extract_by_speaker(src_json_data):
 
 
 def write2File(trans_file_name, client_text_list):
-    #shutil.rmtree('/home/daniel/deepsy/TM/client_mini_turns/')
-    #os.makedirs('/home/daniel/deepsy/TM/client_mini_turns/')
+
     client_text_list_len = len(client_text_list)
     for turn_i in range(client_text_list_len):
         turn = client_text_list[turn_i]
@@ -67,25 +66,32 @@ def write2File(trans_file_name, client_text_list):
                 f.write(mini_turn + ' ')
 
 
-def write2File_client_to_file(trans_file_name, client_text_list):
-    client_text_list_len = len(client_text_list)
-    file_name = 'clients/' + str(trans_file_name) + '_all_turns.txt'
+def writeEntireSession2File(trans_file_name, text_list):
+    # Write the whole session to single file.
+    text_list_len = len(text_list)
+    file_name = 'Dirs_of_Docs/{0}/Documents/{1}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name))
+
     with open(file_name, 'w') as f:
-        for turn_i in range(client_text_list_len):
-            turn = client_text_list[turn_i]
-            for mini_turn in turn:
-                f.write(mini_turn + ' ')
+        for turn_i in range(text_list_len):
+            turn = text_list[turn_i]
+            f.write(turn + ' ')
 
 
-def write4turns2File(trans_file_name, client_text_list):
-    #shutil.rmtree('/home/daniel/deepsy/TM/client_4_mini_turns/')
-    #os.makedirs('/home/daniel/deepsy/TM/client_4_mini_turns/')
+def writeTurns2File(trans_file_name, text_list, num_of_turns):
+    # THERE IS HERE A PROBLEM,
+    # WAS CREATED FOR MINI-TURNS, BUT NOW TEXT LIST IS 1 SINGLE TURN
+    # IS WRITING TURN IS NOT TOO MUCH?
     file_i = 0
-    client_text_list_len = len(client_text_list)
-    for turn_i in range(client_text_list_len):
-        if turn_i%4 == 0:
+    text_to_print = ''
+    text_list_len = len(text_list)
+    for turn_i in range(text_list_len):
+        turn = text_list[turn_i]
+        text_to_print += turn
+        text_to_print += ' '
+
+        if turn_i%num_of_turns == 0:
             file_i += 1
-        turn = client_text_list[turn_i]
+
         file_name = 'v2_words_client_4_mini_turns/' + str(trans_file_name) + str(file_i) + '.txt'
         with open(file_name, 'w') as f:
             for mini_turn in turn:
@@ -93,7 +99,7 @@ def write4turns2File(trans_file_name, client_text_list):
             f.write('\n')
 
 
-def writeDynamicTurns2File(trans_file_name, text_list):
+def writeDynamicWords2File(trans_file_name, text_list):
     # Push words to buffer, until it contain NUM_OF_WORDS words.
     # Then write that content to file.
     file_i = 1
@@ -137,10 +143,14 @@ if __name__ == '__main__':
         with open(json_src_file_name) as f:
             src_json_data = json.load(f)
 
+        # 'text_list' contains all the string content of the current json
         text_list = extract_by_speaker(src_json_data)
 
         # write2File(file_name, client_text_list)
-        # write2File_client_to_file(file_name, client_text_list)
         # write4turns2File(file_name, client_text_list)
-        writeDynamicTurns2File(file_name, text_list)
+
+        # Supported:
+        writeEntireSession2File(file_name, text_list)
+        # writeDynamicWords2File(file_name, text_list)
+
 
