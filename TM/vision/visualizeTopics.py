@@ -7,13 +7,19 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
+TOPICS_TO_FILTER = [0,1]
+TOPICS_TO_SAVE = []
+
 
 def getOptions():
     if '--input' in sys.argv:
         input_option_i = sys.argv.index('--input')
         file_name = sys.argv[input_option_i + 1]
     else:
-        file_name = '../client_5/topic-composition.txt'
+        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c01_sessions/results/inferencer.txt'
+        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results/composition.txt'
+        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/composition_100.txt'
+        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/composition_100.txt'
 
     if '--output' in sys.argv:
         output_option_i = sys.argv.index('--output')
@@ -24,13 +30,25 @@ def getOptions():
     if '--client2view' in sys.argv:
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
-        print("Visualizing only for {0}".format(client2view_name))
     else:
-        client2view_name = None
+        client2view_name = 'י'
 
     print("Visualizing: {0}".format(file_name))
+    print("Visualizing only for {0}".format(client2view_name))
 
     return file_name, output_name, client2view_name
+
+
+def filterTopics(docs_topics_dist):
+    docs_topics_dist_T = docs_topics_dist.T
+    # docs_topics_dist_T_list = list(docs_topics_dist_T)
+    for topic_number, dists in enumerate(docs_topics_dist_T):
+        if topic_number in TOPICS_TO_FILTER:
+            docs_topics_dist_T = np.delete(docs_topics_dist_T, topic_number, 0)
+
+    docs_topics_dist = docs_topics_dist_T.T
+
+    return docs_topics_dist
 
 
 def process_file(file_name, client2view_name):
@@ -80,16 +98,19 @@ def make_graph(composition_obj):
         docs_topics_dist_list.append(doc[2])
     docs_topics_dist = np.array(docs_topics_dist_list)
 
+    # filter certain topics
+    # docs_topics_dist_filtered = filterTopics(docs_topics_dist)
+
     df = DataFrame(docs_topics_dist, dtype=float, index=docs_number).T
 
     # annot: show values over the cells
     dashboard = sns.heatmap(df, annot=False)
+    # just rotate the xticks labels
     dashboard.set_xticklabels(dashboard.get_xticklabels(), rotation=30)
+    plt.grid()
 
     plt.show()
-    # plt.show(block=False)
-    # input("Hit Enter To Close")
-    # plt.close()
+
 
 
 if __name__ == '__main__':
