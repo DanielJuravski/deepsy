@@ -1,7 +1,8 @@
 import gzip
 import numpy as np
 
-GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state.gz'
+# GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state.gz'
+GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
 DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed3.txt'
 # CLIENT_NAME = 'א'
 
@@ -43,6 +44,7 @@ def generateColors(num_topics):
 
 
 def generateHTML(topic_state, num_topics):
+    print("Generating HTML file ...")
     t_colors_dict = generateColors(num_topics)
 
     code = """
@@ -57,7 +59,9 @@ def generateHTML(topic_state, num_topics):
     </style>
     </head>
     <body>
-    <h1>This is a heading</h1>
+    """
+    code += "<h1><center><u>{0}</u></center></h1>".format(DOCUMENT_PATH)
+    code += """
     <p style="font-size:30px; font-family:Arial">
     """
 
@@ -66,8 +70,8 @@ def generateHTML(topic_state, num_topics):
         topic = line[INDEX_TOPIC]
         topic_color = t_colors_dict[topic]
         code += """
-        <span style="color:black; background-color:{1}"> {0} </span>
-        """.format(word, topic_color)
+        <span style="color:black; background-color:{1}" title="{2}"> {0} </span>
+        """.format(word, topic_color, topic)
 
     code += """
     </p>
@@ -79,6 +83,7 @@ def generateHTML(topic_state, num_topics):
 
 
 def exportHTML(code):
+    print("Saving HTML file ...")
     Html_file = open("colorized_topics.html", "w")
     Html_file.write(code)
     Html_file.close()
