@@ -4,8 +4,9 @@ import os
 ########################## Params - Start ##########################
 TURN_SPEAKER = 'Client'
 TEXT_TYPE = 'plainText_parsed_word'
-NUM_OF_WORDS = 1000
-OUTPUT_DIR_NAME = 'c_sessions'
+NUM_OF_WORDS = 250
+NUM_OF_TURNS = 5
+OUTPUT_DIR_NAME = 'c_5turns_words'
 ########################## Params - End   ##########################
 
 
@@ -48,9 +49,13 @@ def extract_by_speaker(src_json_data):
                 # take only the TURN_SPEAKER text, the rest will not be written
                 if mini_dialog_turn_speaker == TURN_SPEAKER:
                     text = mini_dialog_turn[TEXT_TYPE]
-                    dialog_turn_text += ' '
-                    dialog_turn_text += text
-            text_list.append(dialog_turn_text)
+                    # handle blank mini_turns text
+                    if text != "":
+                        dialog_turn_text += ' '
+                        dialog_turn_text += text
+            # handle blank mini_turns text
+            if dialog_turn_text != "":
+                text_list.append(dialog_turn_text)
 
     return text_list
 
@@ -77,26 +82,32 @@ def writeEntireSession2File(trans_file_name, text_list):
             f.write(turn + ' ')
 
 
-def writeTurns2File(trans_file_name, text_list, num_of_turns):
-    # THERE IS HERE A PROBLEM,
-    # WAS CREATED FOR MINI-TURNS, BUT NOW TEXT LIST IS 1 SINGLE TURN
+def writeDynamicTurns2File(trans_file_name, text_list):
+    # Write words to file by the number of turns.
+    # HERE THERE IS A PROBLEM,
+    # ORIGINALLY WAS CREATED FOR MINI-TURNS, BUT NOW TEXT LIST IS 1 SINGLE TURN
     # IS WRITING TURN IS NOT TOO MUCH?
-    file_i = 0
+    file_i = 1
     text_to_print = ''
-    text_list_len = len(text_list)
-    for turn_i in range(text_list_len):
+    for turn_i, _ in enumerate(text_list):
         turn = text_list[turn_i]
         text_to_print += turn
         text_to_print += ' '
 
-        if turn_i%num_of_turns == 0:
-            file_i += 1
+        if turn_i % NUM_OF_TURNS == 0 and turn_i != 0:
+            file_name = 'Dirs_of_Docs/{0}/Documents/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
 
-        file_name = 'v2_words_client_4_mini_turns/' + str(trans_file_name) + str(file_i) + '.txt'
-        with open(file_name, 'w') as f:
-            for mini_turn in turn:
-                f.write(mini_turn + ' ')
-            f.write('\n')
+            with open(file_name, 'w') as f:
+                f.write(text_to_print)
+
+            file_i += 1
+            text_to_print = ''
+
+    # Write the last section to file. because we exited from the for loop.
+    file_name = 'Dirs_of_Docs/{0}/Documents/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
+
+    # with open(file_name, 'w') as f:
+    #     f.write(text_to_print)
 
 
 def writeDynamicWords2File(trans_file_name, text_list):
@@ -150,7 +161,10 @@ if __name__ == '__main__':
         # write4turns2File(file_name, client_text_list)
 
         # Supported:
-        writeEntireSession2File(file_name, text_list)
+        # writeEntireSession2File(file_name, text_list)
         # writeDynamicWords2File(file_name, text_list)
+        writeDynamicTurns2File(file_name, text_list)
+
+    print("Done.")
 
 
