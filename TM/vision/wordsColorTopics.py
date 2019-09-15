@@ -1,9 +1,10 @@
 import gzip
 import numpy as np
+from collections import defaultdict
 
-# GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state.gz'
-GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
-DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed3.txt'
+GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state_100.gz'
+# GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
+DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed4.txt'
 # CLIENT_NAME = 'א'
 
 INDEX_DOC_NUMBER = 0
@@ -47,34 +48,52 @@ def generateHTML(topic_state, num_topics):
     print("Generating HTML file ...")
     t_colors_dict = generateColors(num_topics)
 
+    # init
     code = """
     <!DOCTYPE html>
-    <html dir="rtl" lang="ar">
+    <html dir="rtl" lang="he">
     <head>
     <meta charset="utf-8">
     <style>
     body {background-color: powderblue;}
-    h1   {color: blue;}
-    p    {color: red;}
+    h1 {color: blue;}
+    p_words {color: black;}
+    p_stats {color: black;}
     </style>
     </head>
     <body>
     """
-    code += "<h1><center><u>{0}</u></center></h1>".format(DOCUMENT_PATH)
-    code += """
-    <p style="font-size:30px; font-family:Arial">
-    """
 
+    # title
+    code += """<h1 dir="ltr"><center><u>{0}</u></center></h1>""".format(DOCUMENT_PATH)
+
+    # words
+    code += """
+    <p_words style="font-size:30px; font-family:Arial">
+    """
+    topic_instances = defaultdict(int)  # which topics were in the current trans and how many
+    numOfWords = 0
     for line in topic_state:
         word = line[INDEX_TOKEN_WORD]
+        numOfWords += 1
         topic = line[INDEX_TOPIC]
+        topic_instances[topic] += 1
         topic_color = t_colors_dict[topic]
         code += """
-        <span style="color:black; background-color:{1}" title="{2}"> {0} </span>
+        <span style="background-color:{1}" title="{2}"> {0} </span>
         """.format(word, topic_color, topic)
+    code += "</p_words><br><br><br>"
+
+    # stats
+    code += """
+    <p_stats style="font-size:30px; font-family:Arial"><center>
+    Number of words: {0} <br>
+    Number of topics: {1} <br>
+    </center></p_stats>
+    """.format(numOfWords,
+               len(topic_instances))
 
     code += """
-    </p>
     </body>
     </html>
     """
