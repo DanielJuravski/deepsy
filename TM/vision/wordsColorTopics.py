@@ -1,11 +1,18 @@
 import gzip
 import numpy as np
 from collections import defaultdict
+import yaml
+import operator
 
 GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state_100.gz'
 # GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
-DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed4.txt'
+# DOCUMENT_PATH = 'א5_31.12.14.docx.json.parsed3.txt'
+DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed9.txt'
 # CLIENT_NAME = 'א'
+
+# yaml colors file
+TOPICS_NUM = 100
+FILE_NAME = str(TOPICS_NUM) + '_HMTL_colors.yml'
 
 INDEX_DOC_NUMBER = 0
 INDEX_DOC_SOURCE = 1
@@ -34,19 +41,45 @@ def loadFile():
     return file_content, num_topics
 
 
-def generateColors(num_topics):
-    topic_color = {}
-    for t in range(num_topics):
-        color = np.random.choice(range(256), size=3)
-        color_format = "rgb({0} {1} {2})".format(color[0], color[1], color[2])
-        topic_color[str(t)] = color_format
+def getColors():
+    # load colors yaml fron static file
+    # that static file was generated with generateHTMLColors.py script
+    with open(FILE_NAME, 'r') as f:
+        topic_color = yaml.safe_load(f)
 
     return topic_color
 
 
-def generateHTML(topic_state, num_topics):
+def generateTable(topic_instances):
+    table = """
+    <center>
+    <table>
+        <th>Count</th>
+        <th>Topic</th>
+        <th>#</th>
+    """
+
+    sorted_topic_instances = sorted(topic_instances.items(), key=lambda item: item[1], reverse=True)
+    for i, (t,c) in enumerate(sorted_topic_instances):
+        table += """
+        <tr>
+            <td>{0}</td>
+            <td>{1}</td>
+            <td>{2}</td>
+        </tr>
+        """.format(c, t, i+1)
+
+    table += """
+    </table>
+    </center>
+    """
+
+    return table
+
+
+def generateHTML(topic_state):
     print("Generating HTML file ...")
-    t_colors_dict = generateColors(num_topics)
+    t_colors_dict = getColors()
 
     # init
     code = """
@@ -55,10 +88,14 @@ def generateHTML(topic_state, num_topics):
     <head>
     <meta charset="utf-8">
     <style>
-    body {background-color: powderblue;}
-    h1 {color: blue;}
-    p_words {color: black;}
-    p_stats {color: black;}
+        body {background-color: powderblue;}
+        h1 {color: blue;}
+        p_words {color: black;}
+        p_stats {color: black;}
+        table {border-collapse: collapse;}
+        table, th, td {border: 1px solid black; text-align: left}
+        th, td {}
+        th {text-align: left; padding: 10px}
     </style>
     </head>
     <body>
@@ -86,13 +123,17 @@ def generateHTML(topic_state, num_topics):
 
     # stats
     code += """
-    <p_stats style="font-size:30px; font-family:Arial"><center>
+    <p_stats style="font-size:30px; font-family:Arial; text-align:center">
+    <center>
     Number of words: {0} <br>
     Number of topics: {1} <br>
-    </center></p_stats>
+    </center>
+    </p_stats>
     """.format(numOfWords,
                len(topic_instances))
+    code += generateTable(topic_instances)
 
+    # end
     code += """
     </body>
     </html>
@@ -103,12 +144,12 @@ def generateHTML(topic_state, num_topics):
 
 def exportHTML(code):
     print("Saving HTML file ...")
-    Html_file = open("colorized_topics.html", "w")
-    Html_file.write(code)
-    Html_file.close()
+    html_file = open("colorized_topics.html", "w")
+    html_file.write(code)
+    html_file.close()
 
 
 if __name__ == '__main__':
     topic_state, num_topics = loadFile()
-    code = generateHTML(topic_state, num_topics)
+    code = generateHTML(topic_state)
     exportHTML(code)
