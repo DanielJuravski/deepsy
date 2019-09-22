@@ -9,6 +9,7 @@ GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-st
 # DOCUMENT_PATH = 'א5_31.12.14.docx.json.parsed3.txt'
 DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed9.txt'
 # CLIENT_NAME = 'א'
+TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
 
 # yaml colors file
 TOPICS_NUM = 100
@@ -21,6 +22,8 @@ INDEX_TOKEN_NUMBER = 3
 INDEX_TOKEN_WORD = 4
 INDEX_TOPIC = 5
 
+# HTML props
+#PAGE_COLOR = 'powderblue'
 
 def loadFile():
     print("Loading gz ...")
@@ -50,6 +53,21 @@ def getColors():
     return topic_color
 
 
+def processData(topic_state):
+    topic_instances = defaultdict(int)  # which topics were in the current trans and how many
+    numOfWords = 0
+    words_info = list()
+
+    for line in topic_state:
+        word = line[INDEX_TOKEN_WORD]
+        numOfWords += 1
+        topic = line[INDEX_TOPIC]
+        topic_instances[topic] += 1
+        words_info.append((word, topic))
+
+    return words_info, numOfWords, topic_instances
+
+
 def generateTable(topic_instances):
     table = """
     <center>
@@ -77,7 +95,16 @@ def generateTable(topic_instances):
     return table
 
 
-def generateHTML(topic_state):
+def getWordColor(t_colors_dict, topic, topic_instances):
+    if topic_instances[topic] > TOPIC_INSTANCE_THRESHOLD_TO_COLOR:
+        color = t_colors_dict[topic]
+    else:
+        color = 'transparent'
+
+    return color
+
+
+def generateHTML(words_info, numOfWords, topic_instances):
     print("Generating HTML file ...")
     t_colors_dict = getColors()
 
@@ -88,14 +115,14 @@ def generateHTML(topic_state):
     <head>
     <meta charset="utf-8">
     <style>
-        body {background-color: powderblue;}
-        h1 {color: blue;}
-        p_words {color: black;}
-        p_stats {color: black;}
-        table {border-collapse: collapse;}
-        table, th, td {border: 1px solid black; text-align: left}
-        th, td {}
-        th {text-align: left; padding: 10px}
+    body {background-color: powderblue;}
+    h1 {color: blue;}
+    p_words {color: black;}
+    p_stats {color: black;}
+    table {border-collapse: collapse;}
+    table, th, td {border: 1px solid black; text-align: left}
+    th, td {}
+    th {text-align: left; padding: 10px}
     </style>
     </head>
     <body>
@@ -108,14 +135,11 @@ def generateHTML(topic_state):
     code += """
     <p_words style="font-size:30px; font-family:Arial">
     """
-    topic_instances = defaultdict(int)  # which topics were in the current trans and how many
-    numOfWords = 0
-    for line in topic_state:
-        word = line[INDEX_TOKEN_WORD]
-        numOfWords += 1
-        topic = line[INDEX_TOPIC]
-        topic_instances[topic] += 1
-        topic_color = t_colors_dict[topic]
+    for w_info in words_info:
+        word = w_info[0]
+        topic = w_info[1]
+        topic_color = getWordColor(t_colors_dict, topic, topic_instances)
+
         code += """
         <span style="background-color:{1}" title="{2}"> {0} </span>
         """.format(word, topic_color, topic)
@@ -149,7 +173,11 @@ def exportHTML(code):
     html_file.close()
 
 
+
+
+
 if __name__ == '__main__':
     topic_state, num_topics = loadFile()
-    code = generateHTML(topic_state)
+    words_info, numOfWords, topic_instances = processData(topic_state)
+    code = generateHTML(words_info, numOfWords, topic_instances)
     exportHTML(code)
