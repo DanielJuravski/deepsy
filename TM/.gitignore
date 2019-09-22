@@ -12,3 +12,8 @@ logs/
 Dirs_of_Docs
 STOP_WORDS
 pre_process/**/*.txt
+
+*.yml
+*.zip
+*.png
+*.txt
