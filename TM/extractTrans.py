@@ -2,11 +2,11 @@ import json
 import os
 
 ########################## Params - Start ##########################
-TURN_SPEAKER = 'Client'
-TEXT_TYPE = 'plainText_parsed_word'
-NUM_OF_WORDS = 250
+TURN_SPEAKER = 'BOTH'  # Client/Therapist/BOTH
+TEXT_TYPE = 'plainText_parsed_word'  # plainText_parsed_word/plainText_parsed_lemma
+NUM_OF_WORDS = 500
 NUM_OF_TURNS = 5
-OUTPUT_DIR_NAME = 'c_5turns_words'
+OUTPUT_DIR_NAME = 'b_500_words'
 ########################## Params - End   ##########################
 
 
@@ -19,6 +19,7 @@ STR_PLAIN_TEXT = 'plainText'
 STR_SPEAKER = 'speaker'
 STR_CLIENT = 'Client'
 STR_THERAPIST = 'Therapist'
+STR_BOTH = 'BOTH'
 
 # Extracting plain text
 PLAIN_TEXT_FILE_PATH = '/tmp/plainText.txt'
@@ -40,14 +41,14 @@ def extract_by_speaker(src_json_data):
         dialog_turn_speaker = dialog_turn[STR_SPEAKER]
 
         # take only the TURN_SPEAKER text, the rest will not be written
-        if dialog_turn_speaker == TURN_SPEAKER:
+        if dialog_turn_speaker == TURN_SPEAKER or TURN_SPEAKER == STR_BOTH:
             mini_dialog_turn_list = dialog_turn[STR_MINI_DIALOG_TURN_LIST]
             for mini_dialog_turn_i, _ in enumerate(mini_dialog_turn_list):
                 mini_dialog_turn = mini_dialog_turn_list[mini_dialog_turn_i]
                 mini_dialog_turn_speaker = mini_dialog_turn[STR_SPEAKER]
 
                 # take only the TURN_SPEAKER text, the rest will not be written
-                if mini_dialog_turn_speaker == TURN_SPEAKER:
+                if mini_dialog_turn_speaker == TURN_SPEAKER or TURN_SPEAKER == STR_BOTH:
                     text = mini_dialog_turn[TEXT_TYPE]
                     # handle blank mini_turns text
                     if text != "":
@@ -135,6 +136,7 @@ def writeDynamicWords2File(trans_file_name, text_list):
 
 
 def createOutputDir():
+    print('Create output Documents dir ...')
     output_dir = 'Dirs_of_Docs/{0}/Documents'.format(OUTPUT_DIR_NAME)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -147,6 +149,7 @@ if __name__ == '__main__':
     # create the dir where the created documents will be plotted to
     createOutputDir()
 
+    print('Processing ...')
     directory = os.fsencode(TRANS_DIR)
     for file in os.listdir(directory):
         file_name = os.fsdecode(file)
@@ -162,8 +165,8 @@ if __name__ == '__main__':
 
         # Supported:
         # writeEntireSession2File(file_name, text_list)
-        # writeDynamicWords2File(file_name, text_list)
-        writeDynamicTurns2File(file_name, text_list)
+        writeDynamicWords2File(file_name, text_list)
+        # writeDynamicTurns2File(file_name, text_list)
 
     print("Done.")
 
