@@ -4,9 +4,9 @@ import os
 ########################## Params - Start ##########################
 TURN_SPEAKER = 'BOTH'  # Client/Therapist/BOTH
 TEXT_TYPE = 'plainText_parsed_word'  # plainText_parsed_word/plainText_parsed_lemma
-NUM_OF_WORDS = 500
+NUM_OF_WORDS = 1000
 NUM_OF_TURNS = 5
-OUTPUT_DIR_NAME = 'b_500_words'
+OUTPUT_DIR_NAME = 'b_1000_words'
 ########################## Params - End   ##########################
 
 
@@ -31,7 +31,7 @@ TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
 
 
 def extract_by_speaker(src_json_data):
-    # That method extracts all the json content (only the relevant speaker [client/therapist] to one list by turns.
+    # That method extracts all the json content (only the relevant speaker [client/therapist/BOTH] to one list by turns.
     text_list = []
 
     dialog_turns_list = src_json_data[STR_DIALOG_TURNS_LIST]
@@ -41,14 +41,16 @@ def extract_by_speaker(src_json_data):
         dialog_turn_speaker = dialog_turn[STR_SPEAKER]
 
         # take only the TURN_SPEAKER text, the rest will not be written
-        if dialog_turn_speaker == TURN_SPEAKER or TURN_SPEAKER == STR_BOTH:
+        if dialog_turn_speaker == TURN_SPEAKER or \
+            (TURN_SPEAKER == STR_BOTH and (dialog_turn_speaker == STR_CLIENT or dialog_turn_speaker == STR_THERAPIST)):
             mini_dialog_turn_list = dialog_turn[STR_MINI_DIALOG_TURN_LIST]
             for mini_dialog_turn_i, _ in enumerate(mini_dialog_turn_list):
                 mini_dialog_turn = mini_dialog_turn_list[mini_dialog_turn_i]
                 mini_dialog_turn_speaker = mini_dialog_turn[STR_SPEAKER]
 
                 # take only the TURN_SPEAKER text, the rest will not be written
-                if mini_dialog_turn_speaker == TURN_SPEAKER or TURN_SPEAKER == STR_BOTH:
+                if mini_dialog_turn_speaker == TURN_SPEAKER or \
+                        (TURN_SPEAKER == STR_BOTH and (mini_dialog_turn_speaker == STR_CLIENT or mini_dialog_turn_speaker == STR_THERAPIST)):
                     text = mini_dialog_turn[TEXT_TYPE]
                     # handle blank mini_turns text
                     if text != "":
