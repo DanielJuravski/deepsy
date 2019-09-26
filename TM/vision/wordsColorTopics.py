@@ -68,7 +68,7 @@ def processData(topic_state):
     return words_info, numOfWords, topic_instances
 
 
-def generateTable(topic_instances):
+def generateTable(topic_instances, t_colors_dict):
     table = """
     <center>
     <table>
@@ -79,13 +79,14 @@ def generateTable(topic_instances):
 
     sorted_topic_instances = sorted(topic_instances.items(), key=lambda item: item[1], reverse=True)
     for i, (t,c) in enumerate(sorted_topic_instances):
+        bgcolor, font_color = getWordColor(t_colors_dict, t, topic_instances)
         table += """
         <tr>
-            <td>{0}</td>
-            <td>{1}</td>
-            <td>{2}</td>
+            <td style="background-color:{3}; color:{4}">{0}</td>
+            <td style="background-color:{3}; color:{4}">{1}</td>
+            <td style="background-color:{3}; color:{4}">{2}</td>
         </tr>
-        """.format(c, t, i+1)
+        """.format(c, t, i+1, bgcolor, font_color)
 
     table += """
     </table>
@@ -97,11 +98,13 @@ def generateTable(topic_instances):
 
 def getWordColor(t_colors_dict, topic, topic_instances):
     if topic_instances[topic] > TOPIC_INSTANCE_THRESHOLD_TO_COLOR:
-        color = t_colors_dict[topic]
+        bg_color = t_colors_dict[topic]
+        font_color = 'black'
     else:
-        color = 'transparent'
+        bg_color = 'transparent'
+        font_color = 'red'
 
-    return color
+    return bg_color, font_color
 
 
 def generateHTML(words_info, numOfWords, topic_instances):
@@ -115,7 +118,7 @@ def generateHTML(words_info, numOfWords, topic_instances):
     <head>
     <meta charset="utf-8">
     <style>
-    body {background-color: powderblue;}
+    body {background-color: #f5f5f5;}
     h1 {color: blue;}
     p_words {color: black;}
     p_stats {color: black;}
@@ -138,7 +141,7 @@ def generateHTML(words_info, numOfWords, topic_instances):
     for w_info in words_info:
         word = w_info[0]
         topic = w_info[1]
-        topic_color = getWordColor(t_colors_dict, topic, topic_instances)
+        topic_color, font_color = getWordColor(t_colors_dict, topic, topic_instances)
 
         code += """
         <span style="background-color:{1}" title="{2}"> {0} </span>
@@ -151,11 +154,13 @@ def generateHTML(words_info, numOfWords, topic_instances):
     <center>
     Number of words: {0} <br>
     Number of topics: {1} <br>
+    Topic Instance threshold: {2} <br>
     </center>
     </p_stats>
     """.format(numOfWords,
-               len(topic_instances))
-    code += generateTable(topic_instances)
+               len(topic_instances),
+               TOPIC_INSTANCE_THRESHOLD_TO_COLOR)
+    code += generateTable(topic_instances, t_colors_dict)
 
     # end
     code += """
