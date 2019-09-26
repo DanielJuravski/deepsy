@@ -1,13 +1,19 @@
 import gzip
-import numpy as np
 from collections import defaultdict
 import yaml
-import operator
+import json
+import os
+import re
 
-GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/results/topic-state_100.gz'
+WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words'
+# WORKSPACE_PATH = '/tmp/trans_tmp'
+# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/'
+GZ_FILE_PATH = WORKSPACE_PATH + '/results/topic-state_100.gz'
+DOCUMENTS_PATH = WORKSPACE_PATH + '/Documents'
+OUTPUT_PATH = '/home/daniel/deepsy/TM/vision' + '/HTMLs'
 # GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
 # DOCUMENT_PATH = 'א5_31.12.14.docx.json.parsed3.txt'
-DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed9.txt'
+# DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed1.txt'
 # CLIENT_NAME = 'א'
 TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
 
@@ -22,30 +28,31 @@ INDEX_TOKEN_NUMBER = 3
 INDEX_TOKEN_WORD = 4
 INDEX_TOPIC = 5
 
-# HTML props
-#PAGE_COLOR = 'powderblue'
 
 def loadFile():
     print("Loading gz ...")
-    file_content = []
+    file_content = defaultdict(list)
 
     # unzip gz
     with gzip.open(GZ_FILE_PATH, 'r') as fin:
         for line in fin.read().splitlines():
             line_details = line.decode("utf-8").split()
-            doc_name = line_details[INDEX_DOC_SOURCE].split('/')[-1]
             if line_details[0] == '#alpha':
                 # num of alphas minus first and second cells
                 num_topics = len(line_details)-2
-            # check doc name
-            if doc_name == DOCUMENT_PATH:
-                file_content.append(line_details)
+                continue
+            if line_details[0] == '#doc' or line_details[0] == '#beta':
+                continue
+
+            # add data by the document name
+            doc_name = line_details[INDEX_DOC_SOURCE].split('/')[-1]
+            file_content[doc_name].append(line_details)
 
     return file_content, num_topics
 
 
 def getColors():
-    # load colors yaml fron static file
+    # load colors yaml from static file
     # that static file was generated with generateHTMLColors.py script
     with open(FILE_NAME, 'r') as f:
         topic_color = yaml.safe_load(f)
@@ -53,12 +60,13 @@ def getColors():
     return topic_color
 
 
-def processData(topic_state):
+def processData(topic_state, doc):
     topic_instances = defaultdict(int)  # which topics were in the current trans and how many
     numOfWords = 0
     words_info = list()
 
-    for line in topic_state:
+    current_doc_topic_state = topic_state[doc]  # topic_state is defaultdict(list)
+    for line in current_doc_topic_state:
         word = line[INDEX_TOKEN_WORD]
         numOfWords += 1
         topic = line[INDEX_TOPIC]
@@ -107,7 +115,7 @@ def getWordColor(t_colors_dict, topic, topic_instances):
     return bg_color, font_color
 
 
-def generateHTML(words_info, numOfWords, topic_instances):
+def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, prev_doc):
     print("Generating HTML file ...")
     t_colors_dict = getColors()
 
@@ -132,7 +140,24 @@ def generateHTML(words_info, numOfWords, topic_instances):
     """
 
     # title
-    code += """<h1 dir="ltr"><center><u>{0}</u></center></h1>""".format(DOCUMENT_PATH)
+    code += """<h1 dir="ltr"><center><u>{0}</u></center></h1>""".format(doc_name)
+
+    # Next-Prev buttons next_doc, prev_doc
+    next_doc_path = next_doc + '.html'
+    prev_doc_path = prev_doc + '.html'
+
+    if next_doc == 'NULL':
+        code += """
+                   <center>&nbsp;<a href="{0}"><--הקודם</a></center><br><br>
+                   """.format(prev_doc_path)
+    elif prev_doc == 'NULL':
+        code += """
+                   <center><a href="{0}">הבא--></a> &nbsp;</center><br><br>
+                   """.format(next_doc_path)
+    else:
+        code += """
+                   <center><a href="{0}"><--הקודם</a> &nbsp;<a href="{1}">הבא--></a></center><br><br>
+                   """.format(prev_doc_path, next_doc_path)
 
     # words
     code += """
@@ -146,7 +171,7 @@ def generateHTML(words_info, numOfWords, topic_instances):
         code += """
         <span style="background-color:{1}" title="{2}"> {0} </span>
         """.format(word, topic_color, topic)
-    code += "</p_words><br><br><br>"
+    code += "</p_words><br><br>"
 
     # stats
     code += """
@@ -171,18 +196,60 @@ def generateHTML(words_info, numOfWords, topic_instances):
     return code
 
 
-def exportHTML(code):
-    print("Saving HTML file ...")
-    html_file = open("colorized_topics.html", "w")
+def exportHTML(code, doc_name):
+    file_name = doc_name + '.html'
+    print("Saving {} file ...".format(file_name))
+    ifNotExistCreate(OUTPUT_PATH)
+
+    file_path = OUTPUT_PATH + '/' + file_name
+    html_file = open(file_path, "w")
     html_file.write(code)
     html_file.close()
 
 
+def ifNotExistCreate(dir_path):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
+
+def getNextPrevDoc(documents_names, i):
+    documents_number = len(documents_names)
+    if i == 0:
+        prev = 'NULL'
+    else:
+        prev = documents_names[i-1]
+
+    if i == documents_number-1:
+        next = 'NULL'
+    else:
+        next = documents_names[i+1]
+
+    return next, prev
+
+
+def sorted_aphanumeric(data):
+    """
+    used by listdir and getting the same sort order as the os does.
+    :param data:
+    :return:
+    """
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(data, key=alphanum_key)
 
 
 if __name__ == '__main__':
+    # get documents names
+    documents_names = list()
+    for file_name in sorted_aphanumeric(os.listdir(DOCUMENTS_PATH)):
+        documents_names.append(file_name)
+
+    # get info from topic_state file
     topic_state, num_topics = loadFile()
-    words_info, numOfWords, topic_instances = processData(topic_state)
-    code = generateHTML(words_info, numOfWords, topic_instances)
-    exportHTML(code)
+
+    # generate HTMLs
+    for i, doc in enumerate(documents_names):
+        next_doc, prev_doc = getNextPrevDoc(documents_names, i)
+        words_info, numOfWords, topic_instances = processData(topic_state, doc)
+        code = generateHTML(words_info, numOfWords, topic_instances, doc, next_doc, prev_doc)
+        exportHTML(code, doc)
