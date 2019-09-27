@@ -4,22 +4,25 @@ import yaml
 import json
 import os
 import re
+from pathlib import Path
+from shutil import copyfile
 
+
+# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words'
+# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/_legacy_client_5_mini_turns/'
 WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words'
-# WORKSPACE_PATH = '/tmp/trans_tmp'
-# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/'
-GZ_FILE_PATH = WORKSPACE_PATH + '/results/topic-state_100.gz'
+GZ_FILE_PATH = WORKSPACE_PATH + '/results/topic-state_200.gz'
 DOCUMENTS_PATH = WORKSPACE_PATH + '/Documents'
-OUTPUT_PATH = '/home/daniel/deepsy/TM/vision' + '/HTMLs'
-# GZ_FILE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/topic-state_50.gz'
-# DOCUMENT_PATH = 'א5_31.12.14.docx.json.parsed3.txt'
-# DOCUMENT_PATH = 'א2_10.12.14.docx.json.parsed1.txt'
-# CLIENT_NAME = 'א'
+OUTPUT_PATH = WORKSPACE_PATH + '/results/HTMLs_200'
+
 TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
 
 # yaml colors file
-TOPICS_NUM = 100
+TOPICS_NUM = 200
 FILE_NAME = str(TOPICS_NUM) + '_HMTL_colors.yml'
+
+# FAVICON_PATH
+FAVICON_PATH = 'favicon.ico'
 
 INDEX_DOC_NUMBER = 0
 INDEX_DOC_SOURCE = 1
@@ -115,6 +118,15 @@ def getWordColor(t_colors_dict, topic, topic_instances):
     return bg_color, font_color
 
 
+def setFavicon():
+    my_file = Path(FAVICON_PATH)
+    if my_file.is_file():
+        target = OUTPUT_PATH + '/' + FAVICON_PATH.split('/')[-1]
+        copyfile(FAVICON_PATH, target)
+    else:
+        print('[WARNING]: can not find favicon file.')
+
+
 def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, prev_doc):
     print("Generating HTML file ...")
     t_colors_dict = getColors()
@@ -124,17 +136,18 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
     <!DOCTYPE html>
     <html dir="rtl" lang="he">
     <head>
-    <meta charset="utf-8">
-    <style>
-    body {background-color: #f5f5f5;}
-    h1 {color: blue;}
-    p_words {color: black;}
-    p_stats {color: black;}
-    table {border-collapse: collapse;}
-    table, th, td {border: 1px solid black; text-align: left}
-    th, td {}
-    th {text-align: left; padding: 10px}
-    </style>
+        <meta charset="utf-8">
+        <style>
+        body {background-color: #f5f5f5;}
+        h1 {color: blue;}
+        p_words {color: black;}
+        p_stats {color: black;}
+        table {border-collapse: collapse;}
+        table, th, td {border: 1px solid black; text-align: left}
+        th, td {}
+        th {text-align: left; padding: 10px}
+        </style>
+        <link rel="icon" href="favicon.ico">
     </head>
     <body>
     """
@@ -253,3 +266,6 @@ if __name__ == '__main__':
         words_info, numOfWords, topic_instances = processData(topic_state, doc)
         code = generateHTML(words_info, numOfWords, topic_instances, doc, next_doc, prev_doc)
         exportHTML(code, doc)
+
+    # It is always nice to have rainbow favicon
+    setFavicon()
