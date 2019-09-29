@@ -6,7 +6,7 @@ TURN_SPEAKER = 'BOTH'  # Client/Therapist/BOTH
 TEXT_TYPE = 'plainText_parsed_word'  # plainText_parsed_word/plainText_parsed_lemma
 NUM_OF_WORDS = 1000
 NUM_OF_TURNS = 5
-OUTPUT_DIR_NAME = 'b_1000_words'
+OUTPUT_DIR_NAME = 'b_1000_words_dev'
 ########################## Params - End   ##########################
 
 
@@ -15,6 +15,8 @@ PLAIN_TEXT_PARSED_WORD = 'plainText_parsed_word'
 PLAIN_TEXT_PARSED_LEMMA = 'plainText_parsed_lemma'
 STR_DIALOG_TURNS_LIST = 'dialog_turns_list'
 STR_MINI_DIALOG_TURN_LIST = 'mini_dialog_turn_list'
+STR_CLIENT_IDENTIFIER = 'client_identifier'
+STR_THERAPIST_IDENTIFIER = 'therapist_identifier'
 STR_PLAIN_TEXT = 'plainText'
 STR_SPEAKER = 'speaker'
 STR_CLIENT = 'Client'
@@ -30,11 +32,31 @@ PLAIN_TEXT_WORD_SPLITED_FILE_PATH = '/tmp/plainTextWordSplited.txt'
 TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
 
 
-def extract_by_speaker(src_json_data):
+def removeIdentifiers(text, client_identifier, therapist_identifier):
+    """
+    there asre some turns that the transcripts made a mistake,
+    and wrote the client/therapist identifier at the beginning of the turn text.
+    That is bad because: (1) the client/therapist identifier appears a lot (~ as number of the mini turns) what brakes the topic-modeling
+    (2): No additional information is added from those strings (words). So, they will be removed.
+    :param text:
+    :param client_identifier:
+    :param therapist_identifier:
+    :return: "text"
+    """
+    text = text.replace(client_identifier, '')
+    text = text.replace(therapist_identifier, '')
+
+    return text
+
+
+def extract_by_speaker(src_json_data, json_src_file_name):
     # That method extracts all the json content (only the relevant speaker [client/therapist/BOTH] to one list by turns.
     text_list = []
 
     dialog_turns_list = src_json_data[STR_DIALOG_TURNS_LIST]
+    client_identifier = src_json_data[STR_CLIENT_IDENTIFIER]
+    therapist_identifier = src_json_data[STR_THERAPIST_IDENTIFIER]
+
     for dialog_turn_i, _ in enumerate(dialog_turns_list):
         dialog_turn_text = ''
         dialog_turn = dialog_turns_list[dialog_turn_i]
@@ -52,6 +74,7 @@ def extract_by_speaker(src_json_data):
                 if mini_dialog_turn_speaker == TURN_SPEAKER or \
                         (TURN_SPEAKER == STR_BOTH and (mini_dialog_turn_speaker == STR_CLIENT or mini_dialog_turn_speaker == STR_THERAPIST)):
                     text = mini_dialog_turn[TEXT_TYPE]
+                    text = removeIdentifiers(text, client_identifier, therapist_identifier)
                     # handle blank mini_turns text
                     if text != "":
                         dialog_turn_text += ' '
@@ -59,6 +82,7 @@ def extract_by_speaker(src_json_data):
             # handle blank mini_turns text
             if dialog_turn_text != "":
                 text_list.append(dialog_turn_text)
+                # print("Doc:{0}\n line:{1}".format(json_src_file_name, dialog_turn_text))
 
     return text_list
 
@@ -160,7 +184,7 @@ if __name__ == '__main__':
             src_json_data = json.load(f)
 
         # 'text_list' contains all the string content of the current json
-        text_list = extract_by_speaker(src_json_data)
+        text_list = extract_by_speaker(src_json_data, json_src_file_name)
 
         # write2File(file_name, client_text_list)
         # write4turns2File(file_name, client_text_list)
