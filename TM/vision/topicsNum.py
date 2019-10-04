@@ -4,13 +4,14 @@ print(sys.version, '\n')
 import matplotlib.pyplot as plt
 import numpy as np
 from copy import deepcopy
+import yaml
 
 # Import from internal src
 from visualizeTopics import process_file
 
 
 TOPIC_DIST_THRESHOLD = 0.01
-
+ORS_FILE_PATH = '/home/daniel/deepsy/SBS_Analize/Trans_ORS/trans_ors.yml'
 
 def getOptions():
     if '--input' in sys.argv:
@@ -32,8 +33,8 @@ def getOptions():
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'ד'
-
+        client2view_name = 'כב'
+    
     print("Visualizing: {0}".format(file_name))
     print("Visualizing only for {0}".format(client2view_name))
 
@@ -98,10 +99,11 @@ def countTopics(composition_obj):
     return doc_topics, doc_topics_avg, dt_unique
 
 
-def make_graph(doc_topics_num, doc_topics_avg, dt_unique):
+def make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors):
     # doc_topics_num is a list of tuples (doc-session number, topic count in that session)
     # doc_topics_avg is a list of tuples (doc-session number, avg topic count in all those sessions)
     # dt_unique is a list of tuples (doc-session number, count unique topics is the session)
+    # sessions_ors is a list of tuples (doc-session number, ors score of that session)
 
     # doc_topics_num process
     # make list of the topic counters
@@ -123,22 +125,47 @@ def make_graph(doc_topics_num, doc_topics_avg, dt_unique):
             if j[0] == session_number:
                 topic_unique_counts[i] = j[1]
 
+    # sessions_ors process
+    sessions_ors_scores = deepcopy(session_numbers)
+    for i, session_number in enumerate(session_numbers):
+        for j in sessions_ors:
+            if j[0] == session_number:
+                sessions_ors_scores[i] = j[1]
+
     plt.plot(topic_counts)
     plt.plot(topic_avg_counts)
     plt.plot(topic_unique_counts)
+    plt.plot(sessions_ors_scores)
 
     plt.suptitle('Session - Topics num {0}'.format(TOPIC_DIST_THRESHOLD), fontsize=20)
     plt.xlabel('Session number', fontsize=10)
     plt.ylabel('Number of Topics', fontsize=10)
     plt.xticks(np.arange(len(session_numbers)), session_numbers, rotation=90)
     plt.margins(x=0)
-    plt.gca().legend(('#Topics', 'Avg #Topics / Session', 'Unique #Topics in Session'))
+    plt.gca().legend(('#Topics', 'Avg #Topics / Session', 'Unique #Topics in Session', 'ORS'))
     plt.grid()
     plt.show()
+
+
+def getORS(client2view_name):
+    sessions_ors = []
+    with open(ORS_FILE_PATH, 'r') as f:
+        ors_data = yaml.safe_load(f)
+        for (key, val) in ors_data.items():
+            if val['he_char'] == client2view_name:
+                session_number = val['session_number']
+                ors_sum = val['ors_sum']
+                sessions_ors.append((session_number, ors_sum))
+
+    sessions_sorted_ors = sorted(sessions_ors)
+    print(sessions_sorted_ors)
+
+    return sessions_sorted_ors
 
 
 if __name__ == '__main__':
     file_name, output_name, client2view_name = getOptions()
     composition_obj = process_file(file_name, client2view_name)
     doc_topics_num, doc_topics_avg, dt_unique = countTopics(composition_obj)
-    make_graph(doc_topics_num, doc_topics_avg, dt_unique)
+    sessions_ors = getORS(client2view_name)
+    make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors)
