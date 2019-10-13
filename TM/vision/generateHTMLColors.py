@@ -12,15 +12,19 @@ def plotColors(i_colors):
     pass
 
 
-def generateColors(num_topics):
-    print('Generating {} colors ...'.format(num_topics))
+def generateColors():
+    print('Generating {} colors ...'.format(TOPICS_NUM))
     topic_color = {}
     colors = list()
-    for t in range(num_topics):
-        color = np.random.choice(range(256), size=3)
+    generated_colors = 0
+    while generated_colors < TOPICS_NUM:
+        color = (np.random.choice(range(256), size=3)).tolist()
+        if color in colors:
+            continue
         colors.append(color)
         color_format = "rgb({0} {1} {2})".format(color[0], color[1], color[2])
-        topic_color[str(t)] = color_format
+        topic_color[str(generated_colors)] = color_format
+        generated_colors += 1
 
     plotColors(colors)
 
@@ -34,7 +38,7 @@ def write2File(topic_color):
 
 
 def main():
-    topic_color = generateColors(TOPICS_NUM)
+    topic_color = generateColors()
     write2File(topic_color)
 
 
