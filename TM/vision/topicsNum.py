@@ -5,23 +5,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from copy import deepcopy
 import yaml
-
-# Import from internal src
-from visualizeTopics import process_file
+import re
 
 
-TOPIC_DIST_THRESHOLD = 0.01
+TOPIC_DIST_THRESHOLD = 0.002
 ORS_FILE_PATH = '/home/daniel/deepsy/SBS_Analize/Trans_ORS/trans_ors.yml'
+
 
 def getOptions():
     if '--input' in sys.argv:
         input_option_i = sys.argv.index('--input')
         file_name = sys.argv[input_option_i + 1]
     else:
-        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c01_sessions/results/inferencer.txt'
-        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results/composition.txt'
-        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words/results/composition_100.txt'
-        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words/results/composition_100.txt'
+        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words/results/tmp/alpha5/composition_200.txt'
 
     if '--output' in sys.argv:
         output_option_i = sys.argv.index('--output')
@@ -33,7 +29,7 @@ def getOptions():
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'כב'
+        client2view_name = 'א'
     
     print("Visualizing: {0}".format(file_name))
     print("Visualizing only for {0}".format(client2view_name))
@@ -41,11 +37,71 @@ def getOptions():
     return file_name, output_name, client2view_name
 
 
+def process_file(file_name, client2view_name):
+    '''
+    making object with the documents' topics composition
+    :param file_name:
+    :return: list, where each var is a list of doc number, doc name, doc topics.
+    '''
+    print("Proccesing for {}".format(client2view_name))
+    composition_obj = []
+    composition_obj_sorted = []
+    all_doc_names = []
+    with open(file_name, 'r') as f:
+        for line in f:
+            # handle comment lines
+            if line[0] == '#':
+                continue
+            line_details = line.split()
+            doc_name = line_details[1].split('/')[-1]
+            all_doc_names.append(doc_name)
+            patientName_sessionNumber = line_details[1].split('/')[-1].split('.docx.json.parsed')[0].split('_')[0]
+
+            # extracting patient name and drop if patient name option is given
+            patientName = ''.join([i for i in patientName_sessionNumber if not i.isdigit()])
+            if client2view_name is not None and patientName != client2view_name:
+                continue
+
+            # extracting session number and int it
+            doc_number_listed = [int(s) for s in list(patientName_sessionNumber) if s.isdigit()]
+            doc_number = int(''.join(str(e) for e in doc_number_listed))
+            doc_topics_probs = line_details[2:]
+            doc_topics = line_details[2:]
+            composition_obj.append((doc_number, patientName_sessionNumber, doc_name, doc_topics))
+
+    # check that the returned object not empty
+    if client2view_name is not None:
+        if len(composition_obj) <= 0:
+            print("There are not documents fot {0} client, returned object is empty.".format(client2view_name))
+            print("Exiting.")
+            sys.exit()
+
+    # sort doc full names, and recreated composition object by the that sorted.
+    all_doc_names_sorted = sorted_alphanumeric(all_doc_names)
+    for d_s in all_doc_names_sorted:
+        for d_object in composition_obj:
+            if d_object[2] == d_s:
+                composition_obj_sorted.append(d_object)
+
+    return composition_obj_sorted
+
+
+def sorted_alphanumeric(data):
+    """
+    used by _ and returning the same sort order as the os does.
+    :param data:
+    :return:
+    """
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(data, key=alphanum_key)
+
+
 def countTopicsAvg(doc_topics):
     dt_avg = []
     dt_unique = []
     d_prev = d_curr = doc_topics[0][0]
-    t_avg_calc = list()  #  only for calculating
+    t_avg_calc = list()  # only for calculating
     t_unique = set()
 
     for dt in doc_topics:
@@ -92,14 +148,14 @@ def countTopics(composition_obj):
         doc_topics.append((session_number, topics_count, topics_over_threshold))
 
     doc_topics_avg, dt_unique = countTopicsAvg(doc_topics)
-    print(doc_topics)
-    print(doc_topics_avg)
-    print(dt_unique)
+    print("Topics of single doc:{}".format(doc_topics))
+    print("Topics avg per session:{}".format(doc_topics_avg))
+    print("Num of topics per session (U):{}".format(dt_unique))
 
     return doc_topics, doc_topics_avg, dt_unique
 
 
-def make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors):
+def make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors, client2view_name, file_name):
     # doc_topics_num is a list of tuples (doc-session number, topic count in that session)
     # doc_topics_avg is a list of tuples (doc-session number, avg topic count in all those sessions)
     # dt_unique is a list of tuples (doc-session number, count unique topics is the session)
@@ -137,9 +193,10 @@ def make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors):
     plt.plot(topic_unique_counts)
     plt.plot(sessions_ors_scores)
 
-    plt.suptitle('Session - Topics num {0}'.format(TOPIC_DIST_THRESHOLD), fontsize=20)
+    plt.suptitle('Session-Topics num {0} client:{1}'.format(TOPIC_DIST_THRESHOLD, client2view_name), fontsize=20)
+    plt.title(file_name.replace('/home/daniel/deepsy/TM/Dirs_of_Docs/', ''))
     plt.xlabel('Session number', fontsize=10)
-    plt.ylabel('Number of Topics', fontsize=10)
+    plt.ylabel('Number of Topics / ORS', fontsize=10)
     plt.xticks(np.arange(len(session_numbers)), session_numbers, rotation=90)
     plt.margins(x=0)
     plt.gca().legend(('#Topics', 'Avg #Topics / Session', 'Unique #Topics in Session', 'ORS'))
@@ -158,7 +215,7 @@ def getORS(client2view_name):
                 sessions_ors.append((session_number, ors_sum))
 
     sessions_sorted_ors = sorted(sessions_ors)
-    print(sessions_sorted_ors)
+    print("ORS:{}".format(sessions_sorted_ors))
 
     return sessions_sorted_ors
 
@@ -168,4 +225,4 @@ if __name__ == '__main__':
     composition_obj = process_file(file_name, client2view_name)
     doc_topics_num, doc_topics_avg, dt_unique = countTopics(composition_obj)
     sessions_ors = getORS(client2view_name)
-    make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors)
+    make_graph(doc_topics_num, doc_topics_avg, dt_unique, sessions_ors, client2view_name, file_name)
