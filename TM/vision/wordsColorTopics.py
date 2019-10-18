@@ -8,18 +8,18 @@ from pathlib import Path
 from shutil import copyfile
 
 
-# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_5turns_words'
-# WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/_legacy_client_5_mini_turns/'
-WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words'
-GZ_FILE_PATH = WORKSPACE_PATH + '/results/topic-state_200.gz'
+WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words'  # change
+RESULTS_PATH = WORKSPACE_PATH + '/results/tmp/alpha100'  # change
+GZ_FILE_PATH = RESULTS_PATH + '/topic-state_200.gz'  # change
+KEYS_FILE_PATH = RESULTS_PATH + '/keys_200.txt'  # change
+OUTPUT_PATH = RESULTS_PATH + '/HTMLs_200'  # change
 DOCUMENTS_PATH = WORKSPACE_PATH + '/Documents'
-OUTPUT_PATH = WORKSPACE_PATH + '/results/HTMLs_200'
-
-TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
 
 # yaml colors file
-TOPICS_NUM = 200
+TOPICS_NUM = 200  # change
 FILE_NAME = str(TOPICS_NUM) + '_HMTL_colors.yml'
+
+TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
 
 # FAVICON_PATH
 FAVICON_PATH = 'favicon.ico'
@@ -79,43 +79,49 @@ def processData(topic_state, doc):
     return words_info, numOfWords, topic_instances
 
 
-def generateTable(topic_instances, t_colors_dict):
+def generateTable(topic_instances, t_colors_dict, topic_keys):
     table = """
     <center>
     <table>
         <th>Count</th>
         <th>Topic</th>
+        <th>Keys</th>
         <th>#</th>
     """
-
+    colored_topics = 0
     sorted_topic_instances = sorted(topic_instances.items(), key=lambda item: item[1], reverse=True)
     for i, (t,c) in enumerate(sorted_topic_instances):
-        bgcolor, font_color = getWordColor(t_colors_dict, t, topic_instances)
+        bgcolor, font_color, if_colored = getWordColor(t_colors_dict, t, topic_instances)
+        colored_topics += 1 if if_colored is True else 0
+        keys = topic_keys[t]
         table += """
         <tr>
             <td style="background-color:{3}; color:{4}">{0}</td>
             <td style="background-color:{3}; color:{4}">{1}</td>
+            <td style="background-color:{3}; color:{4}; font-family:Arial; text-align:right">{5}</td>
             <td style="background-color:{3}; color:{4}">{2}</td>
         </tr>
-        """.format(c, t, i+1, bgcolor, font_color)
+        """.format(c, t, i+1, bgcolor, font_color, keys)
 
     table += """
     </table>
     </center>
     """
 
-    return table
+    return table, colored_topics
 
 
 def getWordColor(t_colors_dict, topic, topic_instances):
+    colored = False
     if topic_instances[topic] > TOPIC_INSTANCE_THRESHOLD_TO_COLOR:
         bg_color = t_colors_dict[topic]
         font_color = 'black'
+        colored = True
     else:
         bg_color = 'transparent'
         font_color = 'red'
 
-    return bg_color, font_color
+    return bg_color, font_color, colored
 
 
 def setFavicon():
@@ -127,7 +133,7 @@ def setFavicon():
         print('[WARNING]: can not find favicon file.')
 
 
-def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, prev_doc):
+def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, prev_doc, topic_keys):
     print("Generating HTML file ...")
     t_colors_dict = getColors()
 
@@ -143,7 +149,7 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
         p_words {color: black;}
         p_stats {color: black;}
         table {border-collapse: collapse;}
-        table, th, td {border: 1px solid black; text-align: left}
+        table, th, td {border: 1px solid black; text-align: center}
         th, td {}
         th {text-align: left; padding: 10px}
         </style>
@@ -179,7 +185,7 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
     for w_info in words_info:
         word = w_info[0]
         topic = w_info[1]
-        topic_color, font_color = getWordColor(t_colors_dict, topic, topic_instances)
+        topic_color, font_color, if_colored = getWordColor(t_colors_dict, topic, topic_instances)
 
         code += """
         <span style="background-color:{1}" title="{2}"> {0} </span>
@@ -187,18 +193,21 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
     code += "</p_words><br><br>"
 
     # stats
+    table_code, num_colored_topics = generateTable(topic_instances, t_colors_dict, topic_keys)
+
     code += """
     <p_stats style="font-size:30px; font-family:Arial; text-align:center">
     <center>
     Number of words: {0} <br>
-    Number of topics: {1} <br>
+    Number of topics (above threshold): {1} ({3})<br>
     Topic Instance threshold: {2} <br>
     </center>
     </p_stats>
     """.format(numOfWords,
                len(topic_instances),
-               TOPIC_INSTANCE_THRESHOLD_TO_COLOR)
-    code += generateTable(topic_instances, t_colors_dict)
+               TOPIC_INSTANCE_THRESHOLD_TO_COLOR,
+               num_colored_topics)
+    code += table_code
 
     # end
     code += """
@@ -240,7 +249,7 @@ def getNextPrevDoc(documents_names, i):
     return next, prev
 
 
-def sorted_aphanumeric(data):
+def sorted_alphanumeric(data):
     """
     used by listdir and getting the same sort order as the os does.
     :param data:
@@ -251,20 +260,36 @@ def sorted_aphanumeric(data):
     return sorted(data, key=alphanum_key)
 
 
+def getTopicKeys():
+    topic_keys = {}
+    with open(KEYS_FILE_PATH, 'r') as f:
+        data = f.readlines()
+        for line in data:
+            listed_line = line.split('\t', 2)  # leave the keys as one block
+            topic = listed_line[0]
+            keys = listed_line[2].strip('\n')  # remove the \n from end of line
+            topic_keys[topic] = keys
+
+    return topic_keys
+
+
 if __name__ == '__main__':
-    # get documents names
+    # Get documents names
     documents_names = list()
-    for file_name in sorted_aphanumeric(os.listdir(DOCUMENTS_PATH)):
+    for file_name in sorted_alphanumeric(os.listdir(DOCUMENTS_PATH)):
         documents_names.append(file_name)
 
-    # get info from topic_state file
+    # Get topics keys (dict where the key is topic number, and the value is list of topic's words)
+    topic_keys = getTopicKeys()
+
+    # Get info from topic_state file
     topic_state, num_topics = loadFile()
 
-    # generate HTMLs
+    # Generate HTMLs
     for i, doc in enumerate(documents_names):
         next_doc, prev_doc = getNextPrevDoc(documents_names, i)
         words_info, numOfWords, topic_instances = processData(topic_state, doc)
-        code = generateHTML(words_info, numOfWords, topic_instances, doc, next_doc, prev_doc)
+        code = generateHTML(words_info, numOfWords, topic_instances, doc, next_doc, prev_doc, topic_keys)
         exportHTML(code, doc)
 
     # It is always nice to have rainbow favicon
