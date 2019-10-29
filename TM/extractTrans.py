@@ -1,12 +1,15 @@
 import json
 import os
+import numpy as np
 
 ########################## Params - Start ##########################
-TURN_SPEAKER = 'BOTH'  # Client/Therapist/BOTH
+TURN_SPEAKER = 'Client'  # Client/Therapist/BOTH
 TEXT_TYPE = 'plainText_parsed_word'  # plainText_parsed_word/plainText_parsed_lemma
 NUM_OF_WORDS = 1000
-NUM_OF_TURNS = 5
-OUTPUT_DIR_NAME = 'b_1000_words_dev'
+GAUSSIAN_NUM_OF_WORDS = False  # True/False
+NUM_OF_TURNS = 1
+OUTPUT_DIR_NAME = 'cyh_sessions'
+SPLIT_BY = 'session'  # turn/words/session
 ########################## Params - End   ##########################
 
 
@@ -34,7 +37,7 @@ TRANS_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
 
 def removeIdentifiers(text, client_identifier, therapist_identifier):
     """
-    there asre some turns that the transcripts made a mistake,
+    there are some turns that the transcripts made a mistake,
     and wrote the client/therapist identifier at the beginning of the turn text.
     That is bad because: (1) the client/therapist identifier appears a lot (~ as number of the mini turns) what brakes the topic-modeling
     (2): No additional information is added from those strings (words). So, they will be removed.
@@ -87,17 +90,6 @@ def extract_by_speaker(src_json_data, json_src_file_name):
     return text_list
 
 
-def write2File(trans_file_name, client_text_list):
-
-    client_text_list_len = len(client_text_list)
-    for turn_i in range(client_text_list_len):
-        turn = client_text_list[turn_i]
-        file_name = 'client_mini_turns/' + str(trans_file_name) + str(turn_i) + '_turn.txt'
-        with open(file_name, 'w') as f:
-            for mini_turn in turn:
-                f.write(mini_turn + ' ')
-
-
 def writeEntireSession2File(trans_file_name, text_list):
     # Write the whole session to single file.
     text_list_len = len(text_list)
@@ -137,20 +129,30 @@ def writeDynamicTurns2File(trans_file_name, text_list):
     #     f.write(text_to_print)
 
 
+def list2str(text_list):
+    text_str = ''
+    for i in text_list:
+        text_str += i
+
+    return text_str
+
+
 def writeDynamicWords2File(trans_file_name, text_list):
     # Push words to buffer, until it contain NUM_OF_WORDS words.
     # Then write that content to file.
+
+    text_str = list2str(text_list)
+    num_of_words_buffer = np.random.normal(NUM_OF_WORDS, 50, 1) if GAUSSIAN_NUM_OF_WORDS is True else NUM_OF_WORDS
     file_i = 1
     turn_len_sum = 0
     text_to_print = ''
-    for turn_i, _ in enumerate(text_list):
-        turn = text_list[turn_i]
-        # get number of words
-        turn_len_sum += len(turn.split())
-        text_to_print += turn
+    for word in text_str.split():
+
+        turn_len_sum += 1
+        text_to_print += word
         text_to_print += ' '
 
-        if turn_len_sum > NUM_OF_WORDS:
+        if turn_len_sum >= num_of_words_buffer:
             file_name = 'Dirs_of_Docs/{0}/Documents/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
 
             with open(file_name, 'w') as f:
@@ -160,12 +162,20 @@ def writeDynamicWords2File(trans_file_name, text_list):
             turn_len_sum = 0
             text_to_print = ''
 
+    # write last file (where certainty turn_len_sum < num_of_words_buffer)
+    file_name = 'Dirs_of_Docs/{0}/Documents/{1}{2}.txt'.format(OUTPUT_DIR_NAME, str(trans_file_name), str(file_i))
+    with open(file_name, 'w') as f:
+        f.write(text_to_print)
+
 
 def createOutputDir():
     print('Create output Documents dir ...')
     output_dir = 'Dirs_of_Docs/{0}/Documents'.format(OUTPUT_DIR_NAME)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    else:
+        num_of_files = len(os.listdir(output_dir))
+        print('[WARNING] dir already exist with {0} files in it.'.format(num_of_files))
 
 
 if __name__ == '__main__':
@@ -186,13 +196,15 @@ if __name__ == '__main__':
         # 'text_list' contains all the string content of the current json
         text_list = extract_by_speaker(src_json_data, json_src_file_name)
 
-        # write2File(file_name, client_text_list)
-        # write4turns2File(file_name, client_text_list)
-
-        # Supported:
-        # writeEntireSession2File(file_name, text_list)
-        writeDynamicWords2File(file_name, text_list)
-        # writeDynamicTurns2File(file_name, text_list)
+        if SPLIT_BY == 'words':
+            writeDynamicWords2File(file_name, text_list)
+        elif SPLIT_BY == 'turn':
+            writeDynamicTurns2File(file_name, text_list)
+        elif SPLIT_BY == 'session':
+            writeEntireSession2File(file_name, text_list)
+        else:
+            print('[ERROR]: Invalid SPLIT_BY value.')
+            exit(1)
 
     print("Done.")
 
