@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 
 
-DIR_OF_DOCS_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_900_words/Documents'
+DIR_OF_DOCS_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_1turns_words/Documents_mini'
 
 
 def loadDocsStats():
@@ -21,8 +21,11 @@ def loadDocsStats():
 
 def makeGraph(docs_words_len):
     print("Plotting ...")
-    plt.hist(docs_words_len, bins=20)
-    plt.ylabel('No of times')
+    plt.hist(docs_words_len, bins=300, cumulative=-1, orientation='horizontal')
+    plt.ylabel('# words')
+    plt.xlabel('# docs')
+    plt.grid()
+
     plt.show()
 
 
