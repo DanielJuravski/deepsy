@@ -5,12 +5,12 @@ import numpy as np
 from pandas import DataFrame
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import json
 import re
 from pathlib import Path
 
 TOPICS_TO_SHOW = []
-TOPICS_TO_SHOW = []
+# TOPICS_TO_SHOW = [4, 8, 12, 15, 21, 22, 24, 30, 33, 41, 43, 44, 59, 65, 71, 73, 78, 79, 80, 81, 84, 87, 90, 96, 97]
 # TOPICS_TO_SAVE = []
 
 TOPIC_DIST_BASE_NAME = '_probs_dist.txt'
@@ -18,6 +18,7 @@ METADATA_BASE_NAME = '_metadata.txt'
 
 PLT_SHOW = True
 PLT_SAVE = False
+TOP_TOPICS_K = 5
 
 
 def getOptions():
@@ -25,14 +26,14 @@ def getOptions():
         input_option_i = sys.argv.index('--input')
         file_name = sys.argv[input_option_i + 1]
     else:
-        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c01_sessions/results/inferencer.txt'
-        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_900_words/results/composition_200.txt'
+        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_1turns_words/results_mini/composition_100.txt'
+        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/cyh_sessions/results/inferencer_100.txt'
 
     if '--client2view' in sys.argv:
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'א'
+        client2view_name = 'עה'
         # client2view_name = 'א סד ו מא עח יא ש נח ג ח מז עז מג נג לט כ נ כג ז נו עא מח יד ס כה ב כו לב כא עט צ לח ר עד ט ד ע כב ק כח פא ת נא יז י טו מט עג מד מו סה כד נב פ יג עה סו ל כט מה לז יב יט יח ה סב נט עו טז סט מב סא כז מ'
 
     if '--output' in sys.argv:
@@ -63,16 +64,26 @@ def ifNotExistCreate(dir_path):
 
 
 def filterTopics(composition_obj):
-    for doc in composition_obj:
-        t_probs = doc[3]
-        t_probs_keys = t_probs.copy().keys()
+    filtered_composition_obj = composition_obj
 
-        if len(TOPICS_TO_SHOW) > 0:
-            for t in t_probs_keys:
-                if t not in TOPICS_TO_SHOW:
-                    t_probs.pop(t, None)
+    # all that thing happens only when there are special topics to show
+    if len(TOPICS_TO_SHOW) > 0:
 
-    return composition_obj
+        filtered_composition_obj = []
+        for item in composition_obj:
+            session_num = item[0]
+            client_name_session_number = item[1]
+            file_name = item[2]
+            t_probs = item[3]
+            t_probs_ordered = {}
+            for t in TOPICS_TO_SHOW:
+                if t not in t_probs:
+                    raise "topic {0} is unvalid".format(t)
+                t_probs_ordered[t] = t_probs[t]
+            # create new sorted_composition_obj (same as composition_obj) where only the dists are different
+            filtered_composition_obj.append((session_num, client_name_session_number, file_name, t_probs_ordered))
+
+    return filtered_composition_obj
 
 
 def process_file(file_name, client2view_name):
@@ -137,7 +148,11 @@ def makeGraph(composition_obj, output_path, client2view_name):
     for doc in composition_obj:
         docs_number.append(doc[0])
         probs_dict = doc[3]
-        docs_topics_dist_list.append([probs_dict[key] for key in sorted(probs_dict.keys())])
+        if len(TOPICS_TO_SHOW) > 0:
+            # dont sort by the numerical topic number. use the TOPICS_TO_SHOW order
+            docs_topics_dist_list.append([probs_dict[key] for key in (probs_dict.keys())])
+        else:
+            docs_topics_dist_list.append([probs_dict[key] for key in sorted(probs_dict.keys())])
     docs_topics_dist = np.array(docs_topics_dist_list)
     docs_topics_numbers_list = [str(i) for i in list(probs_dict.keys())]
 
@@ -231,11 +246,28 @@ def cleanFiles(file_path):
         os.remove(file_path)
 
 
+def getTopTopics(composition_obj):
+    top_dict = {}  # where key is the session number and value is the top topics
+    for item in composition_obj:
+        session_num = item[0]
+        session_dists = item[3]
+        top_topics = sorted(session_dists.items(), key=lambda item: float(item[1]), reverse=True)
+        k_top_topics = []
+        for k in range(TOP_TOPICS_K):
+            k_top_topics.append(top_topics[k][0])
+        top_dict[session_num] = k_top_topics
+
+    print("Top Topics per Session:")
+    for key, val in top_dict.items():
+        print("\t", key, val)
+
+
 if __name__ == '__main__':
     file_name, output_path, client2view_name_list = getOptions()
 
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
         exportTopicsDist(composition_obj, output_path, client2view_name)
+        getTopTopics(composition_obj)
         makeGraph(composition_obj, output_path, client2view_name)
 
