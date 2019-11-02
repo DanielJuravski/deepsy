@@ -1,0 +1,3 @@
+INPUT_LABELS_FILE = /home/daniel/deepsy/SBS_Analize/Trans2Label/Vanilla/Rupture/trans_rupture.yml
+LABEL_NAME = t_a_rupture1
+LABEL_MANIPULATION = {1: 0, 4: 1, 5: 1}
