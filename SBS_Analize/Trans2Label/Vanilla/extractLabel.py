@@ -3,6 +3,7 @@ import pandas
 import yaml
 import re
 
+# STATIC
 TRANS_DIR_PATH = '/home/daniel/Documents/parsed_trans_reut_v2'
 MAPPING_XLSX_PATH = '/home/daniel/Documents/SBS/Transcriptions_Questionnaire_Mapping.xlsx'
 
@@ -15,8 +16,11 @@ HSCL_OUTPUT_FILE_NAME = 'trans_hscl.yml'
 # RUPTURE
 MY_TRANS_RUPTURE_XLSX_PATH = '/home/daniel/Documents/SBS/my/trans_rupture.csv'
 RUPTURE_OUTPUT_FILE_NAME = 'trans_rupture.yml'
+# POMS
+MY_TRANS_POMS_XLSX_PATH = '/home/daniel/Documents/SBS/my/trans_poms.csv'
+POMS_OUTPUT_FILE_NAME = 'trans_poms.yml'
 
-LABEL = 'rupture'  # ors/hscl/rupture
+LABEL = 'poms'  # ors/hscl/rupture/poms
 
 
 def getTransNames():
@@ -60,6 +64,17 @@ def loadXLSXs():
         df = pandas.read_csv(MY_TRANS_RUPTURE_XLSX_PATH)
         format = ['date', 't_init', 'c_init', 'c_id',
                   'c_a_rupture1', 'c_a_rupture2', 't_a_rupture1', 't_a_rupture2']
+        label_values = df[format]
+
+    ### POMS ###
+    elif LABEL == 'poms':
+        print('Loading {}'.format(MY_TRANS_POMS_XLSX_PATH))
+        df = pandas.read_csv(MY_TRANS_POMS_XLSX_PATH)
+        format = ['date', 't_init', 'c_init', 'c_id',
+                  'c_a_poms_calmness', 'c_a_poms_anger', 'c_a_poms_sad', 'c_a_poms_contentment', 'c_a_poms_anxiety', 'c_a_poms_vigor',
+                  't_a_poms_anger', 't_a_poms_sad', 't_a_poms_contentment', 't_a_poms_anxiety', 't_a_poms_vigor',
+                  'tc_a_poms_anger', 'tc_a_poms_sad', 'tc_a_poms_contentment', 'tc_a_poms_anxiety', 'tc_a_poms_vigor',
+                  'c_a_poms_negative', 'c_a_poms_positive', 'tc_a_poms_negative', 'tc_a_poms_positive']
         label_values = df[format]
 
     else:
@@ -206,11 +221,123 @@ def getRUPTURE(rupture_df, date, c_id, c_init, t_init):
                 t_a_rupture2 = null
 
     if c_a_rupture1 == None or c_a_rupture2 == None or t_a_rupture1 == None or t_a_rupture2 == None:
-        print('date:{0} c_id:{1} c_init:{2} t_init:{3} not exist in {4}'.format(date, c_id, c_init, t_init, MY_TRANS_ORS_XLSX_PATH))
+        print('date:{0} c_id:{1} c_init:{2} t_init:{3} not exist in {4}'.format(date, c_id, c_init, t_init, MY_TRANS_RUPTURE_XLSX_PATH))
         print('c_a_rupture1:{0} c_a_rupture2:{1} t_a_rupture1:{2} t_a_rupture2:{3} '.format(c_a_rupture1, c_a_rupture2, t_a_rupture1, t_a_rupture2))
         # exit(1)
 
     return c_a_rupture1, c_a_rupture2, t_a_rupture1, t_a_rupture2
+
+
+def getPOMS(poms_df, date, c_id, c_init, t_init):
+    c_a_poms_calmness = c_a_poms_anger = c_a_poms_sad = c_a_poms_contentment = c_a_poms_anxiety = c_a_poms_vigor = \
+    t_a_poms_anger = t_a_poms_sad = t_a_poms_contentment = t_a_poms_anxiety = t_a_poms_vigor = \
+    tc_a_poms_anger = tc_a_poms_sad = tc_a_poms_contentment = tc_a_poms_anxiety = tc_a_poms_vigor = \
+    c_a_poms_negative = c_a_poms_positive = tc_a_poms_negative = tc_a_poms_positive = None
+    null = None
+    for line in poms_df.values:
+        if line[0] == date and line[1] == t_init and line[2] == c_init and line[3] == c_id:
+            # c_a
+            try:
+                c_a_poms_calmness = float(line[4])
+            except:
+                c_a_poms_calmness = null
+            try:
+                c_a_poms_anger = float(line[5])
+            except:
+                c_a_poms_anger = null
+            try:
+                c_a_poms_sad = float(line[6])
+            except:
+                c_a_poms_sad = null
+            try:
+                c_a_poms_contentment = float(line[7])
+            except:
+                c_a_poms_contentment = null
+            try:
+                c_a_poms_anxiety = float(line[8])
+            except:
+                c_a_poms_anxiety = null
+            try:
+                c_a_poms_vigor = float(line[9])
+            except:
+                c_a_poms_vigor = null
+            # t_a
+            try:
+                t_a_poms_anger = float(line[10])
+            except:
+                t_a_poms_anger = null
+            try:
+                t_a_poms_sad = float(line[11])
+            except:
+                t_a_poms_sad = null
+            try:
+                t_a_poms_contentment = float(line[12])
+            except:
+                t_a_poms_contentment = null
+            try:
+                t_a_poms_anxiety = float(line[13])
+            except:
+                t_a_poms_anxiety = null
+            try:
+                t_a_poms_vigor = float(line[14])
+            except:
+                t_a_poms_vigor = null
+            # tc_a
+            try:
+                tc_a_poms_anger = float(line[15])
+            except:
+                tc_a_poms_anger = null
+            try:
+                tc_a_poms_sad = float(line[16])
+            except:
+                tc_a_poms_sad = null
+            try:
+                tc_a_poms_contentment = float(line[17])
+            except:
+                tc_a_poms_contentment = null
+            try:
+                tc_a_poms_anxiety = float(line[18])
+            except:
+                tc_a_poms_anxiety = null
+            try:
+                tc_a_poms_vigor = float(line[19])
+            except:
+                tc_a_poms_vigor = null
+            try:
+                c_a_poms_negative = float(line[20])
+            except:
+                c_a_poms_negative = null
+            try:
+                c_a_poms_positive = float(line[21])
+            except:
+                c_a_poms_positive = null
+            try:
+                tc_a_poms_negative = float(line[22])
+            except:
+                tc_a_poms_negative = null
+            try:
+                tc_a_poms_positive = float(line[23])
+            except:
+                tc_a_poms_positive = null
+
+    if c_a_poms_calmness == None or c_a_poms_anger == None or c_a_poms_sad == None or c_a_poms_contentment == None or c_a_poms_anxiety == None or \
+        c_a_poms_vigor == None or t_a_poms_anger == None or t_a_poms_sad == None or t_a_poms_contentment == None or t_a_poms_anxiety == None or \
+        t_a_poms_vigor == None or tc_a_poms_anger == None or tc_a_poms_sad == None or tc_a_poms_contentment == None or tc_a_poms_anxiety == None or \
+        tc_a_poms_vigor == None or c_a_poms_negative == None or c_a_poms_positive == None or tc_a_poms_negative == None or tc_a_poms_positive == None:
+        print('date:{0} c_id:{1} c_init:{2} t_init:{3} not exist in {4}'.format(date, c_id, c_init, t_init, MY_TRANS_POMS_XLSX_PATH))
+        print('c_a_poms_calmness:{0} c_a_poms_anger:{1} c_a_poms_sad:{2} c_a_poms_contentment:{3} c_a_poms_anxiety:{4} c_a_poms_vigor:{5} '
+              't_a_poms_anger:{6} t_a_poms_sad:{7} t_a_poms_contentment:{8} t_a_poms_anxiety:{9} t_a_poms_vigor:{10} tc_a_poms_anger:{11} '
+              'tc_a_poms_sad:{12} tc_a_poms_contentment:{13} tc_a_poms_anxiety:{14} tc_a_poms_vigor:{15} c_a_poms_negative:{16} c_a_poms_positive:{17} '
+              'tc_a_poms_negative: {18} tc_a_poms_positive: {19}'
+              .format(c_a_poms_calmness, c_a_poms_anger, c_a_poms_sad, c_a_poms_contentment, c_a_poms_anxiety, c_a_poms_vigor,
+                      t_a_poms_anger, t_a_poms_sad, t_a_poms_contentment, t_a_poms_anxiety, t_a_poms_vigor,
+                      tc_a_poms_anger, tc_a_poms_sad, tc_a_poms_contentment, tc_a_poms_anxiety, tc_a_poms_vigor,
+                      c_a_poms_negative, c_a_poms_positive, tc_a_poms_negative, tc_a_poms_positive))
+
+    return c_a_poms_calmness, c_a_poms_anger, c_a_poms_sad, c_a_poms_contentment, c_a_poms_anxiety, c_a_poms_vigor, \
+                        t_a_poms_anger, t_a_poms_sad, t_a_poms_contentment, t_a_poms_anxiety, t_a_poms_vigor, \
+                        tc_a_poms_anger, tc_a_poms_sad, tc_a_poms_contentment, tc_a_poms_anxiety, tc_a_poms_vigor, \
+                        c_a_poms_negative, c_a_poms_positive, tc_a_poms_negative, tc_a_poms_positive
 
 
 def generate(trans_names, mapping_df, labels_df):
@@ -290,6 +417,49 @@ def generate(trans_names, mapping_df, labels_df):
                                       'session_number': session_number,
                                       }
 
+    ### POMS ###
+    if LABEL == 'poms':
+        print("Generating {0} labels ...".format(LABEL))
+        for trans_name in trans_names:
+            he_char_sessionNumber, date = trans_name.split('_')
+            he_char = ''.join([i for i in he_char_sessionNumber if not i.isdigit()])
+            session_number = int(re.sub("[^0-9]", "", he_char_sessionNumber))
+            c_id, c_init, t_init = getCTDetails(mapping_df, he_char)
+            c_a_poms_calmness, c_a_poms_anger, c_a_poms_sad, c_a_poms_contentment, c_a_poms_anxiety, c_a_poms_vigor, \
+            t_a_poms_anger, t_a_poms_sad, t_a_poms_contentment, t_a_poms_anxiety, t_a_poms_vigor, \
+            tc_a_poms_anger, tc_a_poms_sad, tc_a_poms_contentment, tc_a_poms_anxiety, tc_a_poms_vigor, \
+            c_a_poms_negative, c_a_poms_positive, tc_a_poms_negative, tc_a_poms_positive = getPOMS(labels_df, date, c_id, c_init,t_init)
+
+            trans_info[trans_name] = {'date': date,
+                                      'he_char': he_char,
+                                      'c_id': c_id,
+                                      'c_init': c_init,
+                                      't_init': t_init,
+                                      'c_a_poms_calmness': c_a_poms_calmness,
+                                      'c_a_poms_anger': c_a_poms_anger,
+                                      'c_a_poms_sad': c_a_poms_sad,
+                                      'c_a_poms_contentment': c_a_poms_contentment,
+                                      'c_a_poms_anxiety': c_a_poms_anxiety,
+                                      'c_a_poms_vigor': c_a_poms_vigor,
+                                      't_a_poms_anger': t_a_poms_anger,
+                                      't_a_poms_sad': t_a_poms_sad,
+                                      't_a_poms_contentment': t_a_poms_contentment,
+                                      't_a_poms_anxiety': t_a_poms_anxiety,
+                                      't_a_poms_vigor': t_a_poms_vigor,
+                                      'tc_a_poms_anger': tc_a_poms_anger,
+                                      'tc_a_poms_sad': tc_a_poms_sad,
+                                      'tc_a_poms_contentment': tc_a_poms_contentment,
+                                      'tc_a_poms_anxiety': tc_a_poms_anxiety,
+                                      'tc_a_poms_vigor': tc_a_poms_vigor,
+                                      'c_a_poms_negative': c_a_poms_negative,
+                                      'c_a_poms_positive': c_a_poms_positive,
+                                      'tc_a_poms_negative': tc_a_poms_negative,
+                                      'tc_a_poms_positive': tc_a_poms_positive,
+                                      'session_number': session_number,
+                                      }
+    else:
+        raise exit("Unsupported label.")
+
     return trans_info
 
 
@@ -300,6 +470,8 @@ def write2File(trans_info):
         out_name = HSCL_OUTPUT_FILE_NAME
     elif LABEL == 'rupture':
         out_name = RUPTURE_OUTPUT_FILE_NAME
+    elif LABEL == 'poms':
+        out_name = POMS_OUTPUT_FILE_NAME
     else:
         raise exit("Unsupported label.")
 
@@ -309,6 +481,7 @@ def write2File(trans_info):
 
 if __name__ == '__main__':
     # Map the trans file names to theirs labels.
+    # For creating vanilla yml files.
     trans_names = getTransNames()
     mapping_values, label_values = loadXLSXs()
     trans_info = generate(trans_names, mapping_values, label_values)

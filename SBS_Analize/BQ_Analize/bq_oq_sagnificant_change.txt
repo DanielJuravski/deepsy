@@ -1,0 +1,53 @@
+pb	{'c_id_S': 304, 'date_S': '19/11/2014', 'oq_sum_S': 69.96}
+sp	{'c_id_S': 3427, 'date_S': '08/10/2015', 'oq_sum_S': 56.0, 'c_id_E': 3427, 'date_E': '27/06/2016', 'oq_sum_E': 34.7391304347826, 'oq_sum_diff': 21.260869565217398, 'change': 'Success', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+uo	{'c_id_S': 1247, 'date_S': '18/10/2014', 'oq_sum_S': 78.0}
+ac	{'c_id_S': 1343, 'date_S': '28/09/2014', 'oq_sum_S': 42.0, 'c_id_E': 1343, 'date_E': '17/07/2015', 'oq_sum_E': 34.0, 'oq_sum_diff': 8.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+ad	{'c_id_S': 1880, 'date_S': '12/10/2015', 'oq_sum_S': 108.0, 'c_id_E': 1880, 'date_E': '06/07/2016', 'oq_sum_E': 96.0, 'oq_sum_diff': 12.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+av	{'c_id_S': 2361, 'date_S': '05/01/2015', 'oq_sum_S': 103.44, 'c_id_E': 2361, 'date_E': '04/08/2015', 'oq_sum_E': 83.0, 'oq_sum_diff': 20.439999999999998, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+yf	{'c_id_S': 2589, 'date_S': '25/11/2015', 'oq_sum_S': 81.0, 'c_id_E': 2589, 'date_E': '12/07/2016', 'oq_sum_E': 84.65, 'oq_sum_diff': -3.6500000000000057, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+zh	{'c_id_S': 3347, 'date_S': '27/10/2015', 'oq_sum_S': 72.0, 'c_id_E': 3347, 'date_E': '05/07/2016', 'oq_sum_E': 61.0, 'oq_sum_diff': 11.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+ta	{'c_id_S': 3405, 'date_S': '26/01/2015', 'oq_sum_S': 90.0, 'c_id_E': 3405, 'date_E': '07/07/2015', 'oq_sum_E': 95.0, 'oq_sum_diff': -5.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+et	{'c_id_S': 3466, 'date_S': '29/10/2015', 'oq_sum_S': 70.54, 'c_id_E': 3466, 'date_E': '28/06/2016', 'oq_sum_E': 62.0, 'oq_sum_diff': 8.540000000000006, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+gp	{'c_id_S': 3867, 'date_S': '13/10/2014', 'oq_sum_S': 59.0}
+sla	{'c_id_S': 4118, 'date_S': '05/11/2014', 'oq_sum_S': 55.0, 'c_id_E': 4118, 'date_E': '01/07/2015', 'oq_sum_E': 54.0, 'oq_sum_diff': 1.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+at	{'c_id_S': 4483, 'date_S': '03/02/2015', 'oq_sum_S': 106.0, 'c_id_E': 4483, 'date_E': '08/07/2015', 'oq_sum_E': 67.38, 'oq_sum_diff': 38.620000000000005, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+rs	{'c_id_S': 4611, 'date_S': '30/10/2014', 'oq_sum_S': 30.0, 'c_id_E': 4611, 'date_E': '19/07/2015', 'oq_sum_E': 54.0, 'oq_sum_diff': -24.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+ee	{'c_id_S': 5794, 'date_S': '24/12/2014', 'oq_sum_S': 56.1, 'c_id_E': 5794, 'date_E': '14/07/2015', 'oq_sum_E': 70.0, 'oq_sum_diff': -13.899999999999999, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'False'}
+nf	{'c_id_S': 2148, 'date_S': '12/10/2015', 'oq_sum_S': 70.3, 'c_id_E': 2148, 'date_E': '27/07/2016', 'oq_sum_E': 74.0, 'oq_sum_diff': -3.700000000000003, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+mf	{'c_id_S': 6943, 'date_S': '22/11/2014', 'oq_sum_S': 86.7, 'c_id_E': 6943, 'date_E': '02/08/2015', 'oq_sum_E': 81.6, 'oq_sum_diff': 5.1000000000000085, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+fa	{'c_id_S': 7034, 'date_S': '07/08/2014', 'oq_sum_S': 83.0, 'c_id_E': 7034, 'date_E': '01/07/2015', 'oq_sum_E': 102.0, 'oq_sum_diff': -19.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+dp	{'c_id_S': 7086, 'date_S': '23/09/2014', 'oq_sum_S': 97.0, 'c_id_E': 7086, 'date_E': '01/07/2015', 'oq_sum_E': 86.0, 'oq_sum_diff': 11.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+gs	{'c_id_S': 7369, 'date_S': '04/01/2015', 'oq_sum_S': 108.0, 'c_id_E': 7369, 'date_E': '02/08/2015', 'oq_sum_E': 95.0, 'oq_sum_diff': 13.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+hp	{'c_id_S': 7415, 'date_S': '24/04/2015', 'oq_sum_S': 87.0}
+tg	{'c_id_S': 7713, 'date_S': '10/03/2015', 'oq_sum_S': 56.0, 'c_id_E': 7713, 'date_E': '11/09/2015', 'oq_sum_E': 55.0, 'oq_sum_diff': 1.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+sk	{'c_id_S': 7853, 'date_S': '05/01/2015', 'oq_sum_S': 87.0, 'c_id_E': 7853, 'date_E': '07/07/2015', 'oq_sum_E': 63.0, 'oq_sum_diff': 24.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+ma	{'c_id_S': 7060, 'date_S': '05/08/2015', 'oq_sum_S': 62.0, 'c_id_E': 7060, 'date_E': '27/06/2016', 'oq_sum_E': 51.7916666666667, 'oq_sum_diff': 10.2083333333333, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+ol	{'c_id_S': 7770, 'date_S': '22/10/2015', 'oq_sum_S': 94.0, 'c_id_E': 7770, 'date_E': '03/08/2016', 'oq_sum_E': 81.0, 'oq_sum_diff': 13.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+is	{'c_id_S': 8523, 'date_S': '11/11/2014', 'oq_sum_S': 82.0, 'c_id_E': 8523, 'date_E': '05/07/2015', 'oq_sum_E': 63.0, 'oq_sum_diff': 19.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+mo	{'c_id_S': 9272, 'date_S': '30/10/2014', 'oq_sum_S': 63.9861111111111, 'c_id_E': 9272, 'date_E': '07/07/2015', 'oq_sum_E': 74.67, 'oq_sum_diff': -10.683888888888902, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'False'}
+en	{'c_id_E': 2609, 'date_E': '12/11/2015', 'oq_sum_E': 18.3}
+sg	{'c_id_E': 2994, 'date_E': '01/07/2015', 'oq_sum_E': 18.0}
+mb	{'c_id_E': 9320, 'date_E': '08/06/2016', 'oq_sum_E': 31.0, 'c_id_S': 9320, 'date_S': '08/12/2015', 'oq_sum_S': 52.17, 'oq_sum_diff': 21.17, 'change': 'Success', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+gd	{'c_id_S': 173, 'date_S': '15/11/2015', 'oq_sum_S': 53.0, 'c_id_E': 173, 'date_E': '27/07/2016', 'oq_sum_E': 57.1666666666667, 'oq_sum_diff': -4.1666666666667, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+am	{'c_id_S': 417, 'date_S': '23/08/2015', 'oq_sum_S': 51.0, 'c_id_E': 417, 'date_E': '05/07/2016', 'oq_sum_E': 50.0, 'oq_sum_diff': 1.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+mm	{'c_id_S': 949, 'date_S': '16/12/2015', 'oq_sum_S': 75.8, 'c_id_E': 949, 'date_E': '27/07/2016', 'oq_sum_E': 76.0913043478261, 'oq_sum_diff': -0.2913043478260988, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+iw	{'c_id_S': 976, 'date_S': '22/10/2015', 'oq_sum_S': 87.0, 'c_id_E': 976, 'date_E': '08/06/2016', 'oq_sum_E': 62.0, 'oq_sum_diff': 25.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+le	{'c_id_S': 2534, 'date_S': '13/01/2016', 'oq_sum_S': 108.0, 'c_id_E': 2534, 'date_E': '25/07/2016', 'oq_sum_E': 83.0, 'oq_sum_diff': 25.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+do	{'c_id_S': 2592, 'date_S': '15/10/2015', 'oq_sum_S': 21.0, 'c_id_E': 2592, 'date_E': '20/07/2016', 'oq_sum_E': 51.0, 'oq_sum_diff': -30.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+ys	{'c_id_S': 2618, 'date_S': '10/11/2015', 'oq_sum_S': 46.0, 'c_id_E': 2618, 'date_E': '17/07/2016', 'oq_sum_E': 56.6, 'oq_sum_diff': -10.600000000000001, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+rz	{'c_id_S': 2724, 'date_S': '03/02/2016', 'oq_sum_S': 50.0, 'c_id_E': 2724, 'date_E': '11/07/2016', 'oq_sum_E': 77.0, 'oq_sum_diff': -27.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'False'}
+hs	{'c_id_S': 3666, 'date_S': '02/12/2015', 'oq_sum_S': 49.0, 'c_id_E': 3666, 'date_E': '29/06/2016', 'oq_sum_E': 70.0, 'oq_sum_diff': -21.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'False'}
+zb	{'c_id_S': 5000, 'date_S': '05/08/2015', 'oq_sum_S': 65.0, 'c_id_E': 5000, 'date_E': '17/07/2016', 'oq_sum_E': 43.0, 'oq_sum_diff': 22.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+mg	{'c_id_S': 2935, 'date_S': '22/10/2015', 'oq_sum_S': 22.04, 'c_id_E': 2935, 'date_E': '27/06/2016', 'oq_sum_E': 54.0, 'oq_sum_diff': -31.96, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+te	{'c_id_S': 4202, 'date_S': '16/12/2015', 'oq_sum_S': 64.78, 'c_id_E': 4202, 'date_E': '27/07/2016', 'oq_sum_E': 51.0, 'oq_sum_diff': 13.780000000000001, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+op	{'c_id_S': 4642, 'date_S': '10/03/2016', 'oq_sum_S': 45.0, 'c_id_E': 4642, 'date_E': '27/07/2016', 'oq_sum_E': 67.0, 'oq_sum_diff': -22.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'False'}
+tk	{'c_id_S': 4666, 'date_S': '25/08/2015', 'oq_sum_S': 35.0, 'c_id_E': 4666, 'date_E': '27/07/2016', 'oq_sum_E': 36.0, 'oq_sum_diff': -1.0, 'change': 'Failure', 'oq_sum_S_H': 'False', 'oq_sum_E_L': 'True'}
+zr	{'c_id_S': 4705, 'date_S': '20/12/2015', 'oq_sum_S': 76.0, 'c_id_E': 4705, 'date_E': '06/07/2016', 'oq_sum_E': 54.0, 'oq_sum_diff': 22.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+hg	{'c_id_S': 4768, 'date_S': '16/02/2016', 'oq_sum_S': 73.0, 'c_id_E': 4768, 'date_E': '27/06/2016', 'oq_sum_E': 74.0, 'oq_sum_diff': -1.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+ysr	{'c_id_S': 4934, 'date_S': '05/11/2015', 'oq_sum_S': 88.02, 'c_id_E': 4934, 'date_E': '28/06/2016', 'oq_sum_E': 100.029761904762, 'oq_sum_diff': -12.009761904762001, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+lp	{'c_id_S': 5450, 'date_S': '28/12/2015', 'oq_sum_S': 98.0, 'c_id_E': 5450, 'date_E': '06/07/2016', 'oq_sum_E': 72.0, 'oq_sum_diff': 26.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+sr	{'c_id_S': 6950, 'date_S': '06/11/2015', 'oq_sum_S': 74.97, 'c_id_E': 6950, 'date_E': '13/07/2016', 'oq_sum_E': 55.0, 'oq_sum_diff': 19.97, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+dm	{'c_id_S': 7065, 'date_S': '23/11/2015', 'oq_sum_S': 71.0, 'c_id_E': 7065, 'date_E': '27/07/2016', 'oq_sum_E': 52.0, 'oq_sum_diff': 19.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'True'}
+re	{'c_id_S': 7272, 'date_S': '13/02/2016', 'oq_sum_S': 78.0, 'c_id_E': 7272, 'date_E': '24/07/2016', 'oq_sum_E': 64.6666666666667, 'oq_sum_diff': 13.3333333333333, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+zg	{'c_id_S': 7713, 'date_S': '02/02/2016', 'oq_sum_S': 86.0, 'c_id_E': 7713, 'date_E': '12/07/2016', 'oq_sum_E': 70.0, 'oq_sum_diff': 16.0, 'change': 'Success', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
+ds	{'c_id_S': 8892, 'date_S': '16/12/2015', 'oq_sum_S': 69.0, 'c_id_E': 8892, 'date_E': '27/07/2016', 'oq_sum_E': 64.0, 'oq_sum_diff': 5.0, 'change': 'Failure', 'oq_sum_S_H': 'True', 'oq_sum_E_L': 'False'}
