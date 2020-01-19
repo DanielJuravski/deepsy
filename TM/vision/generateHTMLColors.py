@@ -3,7 +3,7 @@ import yaml
 import matplotlib.pyplot as plt
 from matplotlib import colors
 
-TOPICS_NUM = 100
+TOPICS_NUM = 50
 FILE_NAME = str(TOPICS_NUM) + '_HMTL_colors.yml'
 
 

@@ -5,8 +5,8 @@ from datetime import datetime
 
 ########################## Params - Start ##########################
 TRANS_JSON_DIR = '/home/daniel/Documents/parsed_trans_reut_v2/'
-TRANS_DOCUMENTS_DIR = '/home/daniel/deepsy/TM/client_5_mini_turns/'
-FILTER_BY = 'word'
+TRANS_DOCUMENTS_DIR = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_lemmas/Documents/'
+FILTER_BY = 'lemma'
 WORD_FREQ_THRESHOLD = 9
 COMMON_WORD_FREQ_THRESHOLD = 0.9
 ########################## Params - End   ##########################

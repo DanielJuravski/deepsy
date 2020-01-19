@@ -9,32 +9,37 @@ import json
 import re
 from pathlib import Path
 
-TOPICS_TO_SHOW = []
-# TOPICS_TO_SHOW = [4, 8, 12, 15, 21, 22, 24, 30, 33, 41, 43, 44, 59, 65, 71, 73, 78, 79, 80, 81, 84, 87, 90, 96, 97]
-# TOPICS_TO_SAVE = []
+# TOPICS_TO_SHOW = []
+# TOPICS_TO_SHOW = [81, 199, 166, 61, 48, 153, 22, 111, 94, 50, 199, 2, 72, 15, 160, 152, 171, 139, 19, 9, 15]  # ALL (neg->pos)
+# TOPICS_TO_SHOW = [81, 199, 166, 61, 72, 160, 152, 171]  # ORS (neg->pos)
+# TOPICS_TO_SHOW = [48, 153, 22, 111, 139, 19, 9, 15]  # POMS (neg->pos)
+# TOPICS_TO_SHOW = [94, 50, 199, 2]  # HSCL
+
+TOPICS_TO_SHOW = [22, 165, 133, 48]  # PSQ
 
 TOPIC_DIST_BASE_NAME = '_probs_dist.txt'
 METADATA_BASE_NAME = '_metadata.txt'
 
-PLT_SHOW = True
-PLT_SAVE = False
-TOP_TOPICS_K = 5
+PLT_SHOW = False
+PLT_SAVE = True
+DPI = 1200
+TOP_TOPICS_K = 4
 
 
 def getOptions():
-    if '--input' in sys.argv:
-        input_option_i = sys.argv.index('--input')
-        file_name = sys.argv[input_option_i + 1]
-    else:
-        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_1turns_words/results_mini/composition_100.txt'
-        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/cyh_sessions/results/inferencer_100.txt'
-
     if '--client2view' in sys.argv:
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'עה'
+        client2view_name = 'עא'
         # client2view_name = 'א סד ו מא עח יא ש נח ג ח מז עז מג נג לט כ נ כג ז נו עא מח יד ס כה ב כו לב כא עט צ לח ר עד ט ד ע כב ק כח פא ת נא יז י טו מט עג מד מו סה כד נב פ יג עה סו ל כט מה לז יב יט יח ה סב נט עו טז סט מב סא כז מ'
+
+    if '--input' in sys.argv:
+        input_option_i = sys.argv.index('--input')
+        file_name = sys.argv[input_option_i + 1]
+    else:
+        # file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results_no_inference/composition_200.txt'
+        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results/inferencer_200-c_1turns_words_mini_small.txt'
 
     if '--output' in sys.argv:
         output_option_i = sys.argv.index('--output')
@@ -161,23 +166,32 @@ def makeGraph(composition_obj, output_path, client2view_name):
     # annot: show values over the cells
     dashboard = sns.heatmap(df, annot=False)
     # just rotate the xticks labels
-    dashboard.set_xticklabels(dashboard.get_xticklabels(), rotation=30)
+    dashboard.set_xticklabels(dashboard.get_xticklabels(), rotation=0)
     if len(TOPICS_TO_SHOW) > 0:
         T = np.arange(len(docs_topics_numbers_list))+0.5
         dashboard.set_yticks(T)
-        dashboard.set_yticklabels(docs_topics_numbers_list)
+        # just rotate (straight) the yticks labels
+        dashboard.set_yticklabels(docs_topics_numbers_list, rotation=0)
         # dashboard.grid()
     else:
         dashboard.set_yticklabels(docs_topics_numbers_list, minor=True)
         dashboard.grid()
 
-    plt.suptitle('Client name: \n{0}'.format(reverse(client2view_name)), fontsize=15)
-    plt.xlabel('Session number', fontsize=10)
-    plt.ylabel('Topic', fontsize=10)
+    # plt.suptitle('Client Name: \n{0}'.format(reverse(client2view_name)), fontsize=15)
+    # plt.suptitle('Gali\'s ORS topics (poor outcome)'.format(reverse(client2view_name)), fontsize=15)
+    # plt.suptitle('Noya\'s ORS topics (good outcome)'.format(reverse(client2view_name)), fontsize=15)
+    plt.suptitle('Gali\'s PSQ topics (poor outcome)'.format(reverse(client2view_name)), fontsize=15)
+    # plt.suptitle('Noya\'s PSQ topics (good outcome)'.format(reverse(client2view_name)), fontsize=15)
+
+    plt.xlabel('Session Number', fontsize=10)
+    plt.ylabel('Topic Number', fontsize=10)
 
     if PLT_SAVE:
         out_str = output_path + client2view_name + '.png'
-        plt.savefig(out_str, dpi=1500)
+        if DPI is not None:
+            plt.savefig(out_str, dpi=DPI)
+        else:
+            plt.savefig(out_str)
 
     if PLT_SHOW:
         plt.show()

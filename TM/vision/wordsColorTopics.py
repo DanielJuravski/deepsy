@@ -8,18 +8,18 @@ from pathlib import Path
 from shutil import copyfile
 
 
-WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words'  # change
-RESULTS_PATH = WORKSPACE_PATH + '/results/tmp/alpha100'  # change
+WORKSPACE_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_1turns_words'  # change
+RESULTS_PATH = WORKSPACE_PATH + '/results_mini_small'  # change
 GZ_FILE_PATH = RESULTS_PATH + '/topic-state_200.gz'  # change
 KEYS_FILE_PATH = RESULTS_PATH + '/keys_200.txt'  # change
 OUTPUT_PATH = RESULTS_PATH + '/HTMLs_200'  # change
-DOCUMENTS_PATH = WORKSPACE_PATH + '/Documents'
+DOCUMENTS_PATH = WORKSPACE_PATH + '/Documents_mini_small'  # change
 
 # yaml colors file
 TOPICS_NUM = 200  # change
 FILE_NAME = str(TOPICS_NUM) + '_HMTL_colors.yml'
 
-TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 5
+TOPIC_INSTANCE_THRESHOLD_TO_COLOR = 0
 
 # FAVICON_PATH
 FAVICON_PATH = 'favicon.ico'
@@ -137,7 +137,7 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
     print("Generating HTML file ...")
     t_colors_dict = getColors()
 
-    # init
+    ### init ###
     code = """
     <!DOCTYPE html>
     <html dir="rtl" lang="he">
@@ -158,10 +158,10 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
     <body>
     """
 
-    # title
+    ### title ###
     code += """<h1 dir="ltr"><center><u>{0}</u></center></h1>""".format(doc_name)
 
-    # Next-Prev buttons next_doc, prev_doc
+    ### Next-Prev buttons next_doc, prev_doc ###
     next_doc_path = next_doc + '.html'
     prev_doc_path = prev_doc + '.html'
 
@@ -178,7 +178,7 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
                    <center><a href="{0}"><--הקודם</a> &nbsp;<a href="{1}">הבא--></a></center><br><br>
                    """.format(prev_doc_path, next_doc_path)
 
-    # words
+    ### words ###
     code += """
     <p_words style="font-size:30px; font-family:Arial">
     """
@@ -192,9 +192,10 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
         """.format(word, topic_color, topic)
     code += "</p_words><br><br>"
 
-    # stats
+    ### stats ###
     table_code, num_colored_topics = generateTable(topic_instances, t_colors_dict, topic_keys)
 
+    # Number of topics (above threshold): text line is used for parsing in topicsNum.py
     code += """
     <p_stats style="font-size:30px; font-family:Arial; text-align:center">
     <center>
@@ -209,7 +210,7 @@ def generateHTML(words_info, numOfWords, topic_instances, doc_name, next_doc, pr
                num_colored_topics)
     code += table_code
 
-    # end
+    ### end ###
     code += """
     </body>
     </html>

@@ -1,0 +1,6 @@
+-   when loading documents, remove words that not exist in the emb file (on preproccesing? remove all the rare stop words?)
+?   the gaussian probs are very tiny, log on them is negative, that breaks the probability def
+V   mul probs == adding logs(probs)
+
+-   remove unrelevant varaibles declerations
+

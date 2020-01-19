@@ -6,8 +6,7 @@ Run the following cmds from the relevant /result dir.
 * ALL_STOP.txt is in ../../../pre_process/STOP_WORDS_DIRS/2019_08_01_19_09_14/
 * Documents is in Dirs_of_Docs/
 
-`mallet train-topics --input trans.mallet --inferencer-filename inferencer.mallet --output-state topic-state.gz --output-topic-keys keys_50.txt --output-doc-topics composition.txt --optimize-interval 20 --num-iterations 1000 --optimize-burn-in 50 --num-topics 50`
-
+`mallet train-topics --input trans.mallet --inferencer-filename inferencer_100.mallet --output-state topic-state_100.gz --output-topic-keys keys_100.txt --output-doc-topics composition_100.txt --optimize-interval 20 --num-iterations 1000 --optimize-burn-in 50 --num-topics 100`
 
 
 # Inference on Other Documents

@@ -1,9 +1,9 @@
 import yaml
 import matplotlib.pyplot as plt
 
-LABELS_DIR = "/home/daniel/deepsy/SBS_Analize/Trans2Label/ProcessLabels/trans_rupture_01"
-INPUT_LABELS_FILE = LABELS_DIR + '/trans_rupture.yml'
-LABEL_NAME = 't_a_rupture1'
+LABELS_DIR = "/home/daniel/deepsy/SBS_Analize/Trans2Label/ProcessLabels/trans_poms_14"  # change
+INPUT_LABELS_FILE = LABELS_DIR + '/trans_poms.yml'  # change
+LABEL_NAME = 'tc_a_poms_positive'  # change
 
 
 def loadLabelsFile():

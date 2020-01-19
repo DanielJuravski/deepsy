@@ -1,14 +1,21 @@
 import yaml
 import os
 
-INPUT_LABELS_FILE = '/home/daniel/deepsy/SBS_Analize/Trans2Label/Vanilla/Rupture/trans_rupture.yml'
-LABEL_NAME = 't_a_rupture1'
-OUTPUT_DIR_NAME = 'trans_rupture_01'
+INPUT_LABELS_FILE = '/home/daniel/deepsy/SBS_Analize/Trans2Label/Vanilla/POMS/trans_poms.yml'  # change
+LABEL_NAME = 'tc_a_poms_positive'  # change
+OUTPUT_DIR_NAME = 'trans_poms_14'  # change
+MANIPULATION_TYPE = 'C'  # (C)ontinuous/(D)iscrete  # change
 # Discrete values mapping, SRC_val:TARGET_val.
-LABEL_MANIPULATION = {
+DISCRETE_LABEL_MANIPULATION = {  # change if D
     1:0,
+    2:1,
+    3:1,
     4:1,
     5:1
+}
+CONTINUOUS_LABEL_MANIPULATION = {  # change if C
+    'lower_then':3.0,  # will be 0
+    'higher_then':3.0  # will be 1
 }
 
 
@@ -22,16 +29,34 @@ def loadVanillaLabels():
     return vanilla_labels
 
 
+def isfloat(value):
+    try:
+        f_val = float(value)
+        return f_val
+    except:
+        return False
+
+
 def manipulateLabels(labels):
     for item in labels:
         # get old val
         old_val = labels[item][LABEL_NAME]
-        if old_val in LABEL_MANIPULATION:
-            new_val = LABEL_MANIPULATION[old_val]
-        else:
-            new_val = -1
+        if MANIPULATION_TYPE == 'D':
+            if old_val in DISCRETE_LABEL_MANIPULATION:
+                new_val = DISCRETE_LABEL_MANIPULATION[old_val]
+            else:
+                new_val = -1
+        elif MANIPULATION_TYPE == 'C':
+            if isfloat(old_val):
+                if old_val <= CONTINUOUS_LABEL_MANIPULATION['lower_then']:
+                    new_val = 0
+                elif old_val > CONTINUOUS_LABEL_MANIPULATION['higher_then']:
+                    new_val = 1
+                else:
+                    new_val = -1
+            else:
+                new_val = -1
 
-        # set new val
         labels[item][LABEL_NAME] = new_val
 
     return labels
@@ -52,8 +77,11 @@ def writeFile(manipulated_values):
     out_name = OUTPUT_DIR_NAME + '/' + "info.txt"
     with open(out_name, 'w') as f:
         f.writelines("INPUT_LABELS_FILE = {0}\n"
-                     "LABEL_NAME = {1}\n"
-                     "LABEL_MANIPULATION = {2}".format(INPUT_LABELS_FILE, LABEL_NAME, LABEL_MANIPULATION))
+                     "LABEL_NAME = {1}\n".format(INPUT_LABELS_FILE, LABEL_NAME))
+        if MANIPULATION_TYPE == 'C':
+            f.writelines("CONTINUOUS_LABEL_MANIPULATION = {0}".format(CONTINUOUS_LABEL_MANIPULATION))
+        elif MANIPULATION_TYPE == 'D':
+            f.writelines("DISCRETE_LABEL_MANIPULATION = {0}".format(DISCRETE_LABEL_MANIPULATION))
 
 
 if __name__ == '__main__':

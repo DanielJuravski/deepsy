@@ -7,7 +7,7 @@ def getOptions():
         input_option_i = sys.argv.index('--input')
         file_name = sys.argv[input_option_i + 1]
     else:
-        file_name = 'client_5/topics_100.txt'
+        file_name = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_1turns_words/results_mini_small/keys_200.txt'
 
     if '--output' in sys.argv:
         output_option_i = sys.argv.index('--output')
@@ -19,6 +19,7 @@ def getOptions():
         sort_reverse = True
     else:
         sort_reverse = False
+    sort_reverse = True
 
     return file_name, output_name, sort_reverse
 

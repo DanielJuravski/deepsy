@@ -180,6 +180,7 @@ def main():
 
     gaussians, most_similar_tokens = getGaussians(emb, params)
     S = emb.num_of_vectors
+    # S = 1000
     params['S'] = S
 
     data.initTopics(S=S)

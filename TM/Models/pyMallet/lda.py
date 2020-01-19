@@ -3,6 +3,8 @@ import numpy as np
 from collections import Counter
 import topicmodel
 from timeit import default_timer as timer
+import sys
+print(sys.version, '\n')
 
 import pstats, cProfile
 import pyximport
@@ -20,7 +22,7 @@ doc_smoothing = 0.5
 word_smoothing = 0.01
 
 stoplist = set()
-with open("stoplists/en.txt", encoding="utf-8") as stop_reader:
+with open("/home/daniel/deepsy/TM/pre_process/STOP_WORDS_DIRS/by_words/ALL_STOP.txt", encoding="utf-8") as stop_reader:
     for line in stop_reader:
         line = line.rstrip()
         stoplist.add(line)
@@ -184,6 +186,12 @@ for i in range(20):
     model.sample(50)
     print(timer() - start)
     model.print_all_topics()
+
+with open("state.txt", "w") as writer:
+   write_state(writer)
+with open("keys.txt", "w") as writer:
+   model.write_keys(writer)
+
 
 # sample(1000)
 # topicmodel.sample(10, documents, word_topics, topic_totals, doc_smoothing, word_smoothing, smoothing_times_vocab_size, num_topics)

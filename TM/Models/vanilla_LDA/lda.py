@@ -35,10 +35,12 @@ def plotSwaps(Z_swap):
     plt.savefig('swaps.png')
 
 
-def saveObject(model):
+def saveObject(model, data):
     word_topics = model.getObjects()
 
     np.save('word_topics.npy', word_topics.base)
+    with open('tokens_ids.pkl', 'wb') as f:
+        pickle.dump(data.tokens_ids, f)
 
 
 def main():
@@ -49,7 +51,7 @@ def main():
     K = int(50)
     doc_smoothing = 0.5  # alpha (theta)
     word_smoothing = 0.01  # beta (phi)
-    iterations = 1
+    iterations = 500
     topic_num_words_to_print = 20
 
     params['K'] = K
@@ -61,9 +63,9 @@ def main():
     info_file = 'info.txt'
     keys_file = 'keys.txt'
 
-    data = Documents(documents_dir_name='/home/daniel/deepsy/TM/client_5_mini_turns/',
+    data = Documents(documents_dir_name='/home/daniel/deepsy/TM/Dirs_of_Docs/b_1000_words/Documents/',
                      #documents_dir_name='/home/daniel/Documents/Data_Sets/NIPS_papers/docs_mini/',
-                     stop_words_dir_name='/home/daniel/deepsy/TM/STOP_WORDS/',
+                     stop_words_dir_name='/home/daniel/deepsy/TM/pre_process/STOP_WORDS_DIRS/by_words/',
                      K=K)
 
     model = LDAGibbs.LDAGibbsSampler(data, params)
@@ -87,7 +89,7 @@ def main():
     plotSwaps(Z_swap)
 
     # save objects for 'analyzeMats.py' usage
-    saveObject(model)
+    saveObject(model, data)
 
 
 if __name__ == '__main__':

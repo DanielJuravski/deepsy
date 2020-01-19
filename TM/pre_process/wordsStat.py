@@ -1,7 +1,7 @@
 
-
-DOC_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_500_words/Documents/א2_10.12.14.docx.json.parsed1.txt'
 STOP_WORD_PATH = '/home/daniel/deepsy/TM/pre_process/STOP_WORDS_DIRS/by_words/ALL_STOP.txt'
+
+DOC_PATH = '/home/daniel/deepsy/TM/Dirs_of_Docs/b_900_words/Documents/ג29_25.06.15.docx.json.parsed4.txt'
 
 
 def loadDocument():
@@ -22,8 +22,10 @@ def makeStat(document_content, stop_words):
     dropped_words = []
     passed_words = []
 
+    # 1. drop words that appear in STOP WORDS
+    # 2. drop words that len(word) <= 2 (that what MALLET does)
     for word in document_content:
-        if word in stop_words:
+        if (word in stop_words) or (len(word) <= 2):
             dropped_words.append(word)
         else:
             passed_words.append(word)

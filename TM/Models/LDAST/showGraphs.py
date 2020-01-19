@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import interactive
 import pickle as pkl
 
-DIR = '2019_07_12_13_28_49'
+DIR = '2019_07_31_15_58_00'
 
 
 def getDirPath():
