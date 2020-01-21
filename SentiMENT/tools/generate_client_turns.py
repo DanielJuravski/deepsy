@@ -4,8 +4,8 @@ import random
 
 
 PSY_DATASET = "/home/daniel/Documents/parsed_trans_reut_v2/"
-FILTER_BY = "orig"
-MINI_TURNS_FILE = "all_mini_turns.txt"
+FILTER_BY = "orig"  # orig/word/lemma
+MINI_TURNS_FILE = "OutputTXT/all_mini_turns.txt"
 TURN_SPEAKER = 'Client'  # Client/Therapist/BOTH
 NUM_TURNS_PRINT = 10
 

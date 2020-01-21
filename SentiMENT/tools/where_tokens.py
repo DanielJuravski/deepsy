@@ -112,7 +112,7 @@ def printStat(p_tokens, f_tokens, oof):
     print("Unfounded appearances: {0}%".format(appearances_prop))
     print("tokens details in where_tokens.txt")
 
-    with open('where_tokens.txt', 'w') as f:
+    with open('OutputTXT/where_tokens.txt', 'w') as f:
         for key, val in oof.items():
             f.write("token not founded: {0} number of appearances: {1}\n".format(key, val))
 
