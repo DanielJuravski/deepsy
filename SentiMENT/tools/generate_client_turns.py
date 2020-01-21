@@ -7,6 +7,7 @@ PSY_DATASET = "/home/daniel/Documents/parsed_trans_reut_v2/"
 FILTER_BY = "orig"
 MINI_TURNS_FILE = "all_mini_turns.txt"
 TURN_SPEAKER = 'Client'  # Client/Therapist/BOTH
+NUM_TURNS_PRINT = 10
 
 # Transcription json file
 PLAIN_TEXT = 'plainText'
@@ -84,11 +85,16 @@ def outputMiniTurns(mini_turns):
             f.write(mt)
             f.write('\n')
 
-    for _ in range(10):
+    for _ in range(NUM_TURNS_PRINT):
         val = random.randint(0,num_mini_turns)
         print(mini_turns[val])
 
 
 if __name__ == '__main__':
+    """
+    That script iterate all the 873 trans, and 
+    1. write to MINI_TURNS_FILE all the TURN_SPEAKER mini turns
+    2. print randomly NUM_TURNS_PRINT of them
+    """
     mini_turns = loadData()
     outputMiniTurns(mini_turns)
