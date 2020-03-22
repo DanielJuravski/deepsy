@@ -8,21 +8,35 @@ import matplotlib.pyplot as plt
 import json
 import re
 from pathlib import Path
+from copy import deepcopy
+from sklearn.metrics import r2_score
+import json
+
 
 # TOPICS_TO_SHOW = []
 # TOPICS_TO_SHOW = [81, 199, 166, 61, 48, 153, 22, 111, 94, 50, 199, 2, 72, 15, 160, 152, 171, 139, 19, 9, 15]  # ALL (neg->pos)
-TOPICS_TO_SHOW = [81, 199, 166, 61, 72, 15,160, 152, 171]  # ORS (neg->pos)
+NEG_ORS_TOPICS = [81, 199, 166, 61]
+POS_ORS_TOPICS = [72, 15, 160, 152, 171]
+ORS_TOPICS = NEG_ORS_TOPICS + POS_ORS_TOPICS  # ORS (neg->pos)
 # TOPICS_TO_SHOW = [48, 153, 22, 111, 139, 19, 9, 15]  # POMS (neg->pos)
 # TOPICS_TO_SHOW = [94, 50, 199, 2]  # HSCL
+PSQ_TOPICS = [22, 165, 133, 48]  # PSQ
 
-# TOPICS_TO_SHOW = [22, 165, 133, 48]  # PSQ
+TOPICS_TO_SHOW = 'ORS'
+# TOPICS_TO_SHOW = 'PSQ'
+# TOPICS_TO_SHOW = [1,2,3,4,5]
 
 TOPIC_DIST_BASE_NAME = '_probs_dist.txt'
 METADATA_BASE_NAME = '_metadata.txt'
 
-PLT_SHOW = True
-PLT_SAVE = False
-DPI = 600
+NEG_THREADLINE_FUNC = "neg_threadline_func"
+NEG_R2 = "neg_r2"
+POS_THREADLINE_FUNC = "pos_threadline_func"
+POS_R2 = "pos_r2"
+
+PLT_SHOW = False
+PLT_SAVE = True
+DPI = 200
 TOP_TOPICS_K = 4
 
 
@@ -31,9 +45,8 @@ def getOptions():
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'כט'
-        # client2view_name = 'כו'
-        # client2view_name = 'א סד ו מא עח יא ש נח ג ח מז עז מג נג לט כ נ כג ז נו עא מח יד ס כה ב כו לב כא עט צ לח ר עד ט ד ע כב ק כח פא ת נא יז י טו מט עג מד מו סה כד נב פ יג עה סו ל כט מה לז יב יט יח ה סב נט עו טז סט מב סא כז מ'
+        client2view_name = 'א'
+        client2view_name = 'א סד ו מא עח יא ש נח ג ח מז עז מג נג לט כ נ כג ז נו עא מח יד ס כה ב כו לב כא עט צ לח ר עד ט ד ע כב ק כח פא ת נא יז י טו מט עג מד מו סה כד נב פ יג עה סו ל כט מה לז יב יט יח ה סב נט עו טז סט מב סא כז מ'
 
     if '--input' in sys.argv:
         input_option_i = sys.argv.index('--input')
@@ -47,7 +60,7 @@ def getOptions():
         output_path = sys.argv[output_option_i + 1]
     else:
         # output_path = '.'
-        output_path = getCurrentResultsDir(file_name) + 'Topic_Visualize/'
+        output_path = getCurrentResultsDir(file_name) + 'Topic_Visualize/curve/'
     ifNotExistCreate(output_path)
 
     print("Visualizing: {0}".format(file_name))
@@ -69,12 +82,101 @@ def ifNotExistCreate(dir_path):
         os.makedirs(dir_path)
 
 
+def get_avg(d):
+    "get dict of {[topic number]: prob} and return the avg"
+    sum = 0
+    topics_num = 0
+    for k,v in d.items():
+        sum += float(v)
+        topics_num += 1
+
+    avg = sum/topics_num
+
+    return avg
+
+
+def process_sess_avg_arrays(composition_obj, topics_list):
+    filtered_composition_obj = deepcopy(composition_obj)
+    for sess_i, _ in enumerate(composition_obj):
+        all_topics_probs = composition_obj[sess_i][3]
+        for t in all_topics_probs.keys():
+            if t not in topics_list:
+                del filtered_composition_obj[sess_i][3][t]
+        avg_prob = get_avg(filtered_composition_obj[sess_i][3])
+        filtered_composition_obj[sess_i] = filtered_composition_obj[sess_i] + (avg_prob,)  # neg_composition_obj[sess_i][4] == avg
+    # make session number and avg scores arrays
+    sess_numbers = []
+    avg_val = []
+    for sess in filtered_composition_obj:
+        sess_numbers.append(sess[0])
+        avg_val.append(sess[4])
+        # print("{0}\t{1}".format(sess[0], sess[4]))
+
+    nd_sess_numbers = np.asarray(sess_numbers)
+    nd_avg_val = np.asarray(avg_val)
+
+    return nd_sess_numbers, nd_avg_val
+
+
+def plot_curve(plt, sess_numbers, avg_val, dots_format, threadline_format):
+    plt.plot(sess_numbers, avg_val, dots_format)  # , ms=10, mec="r")
+    z = np.polyfit(sess_numbers, avg_val, 1)
+    y_hat = np.poly1d(z)(sess_numbers)
+
+    plt.plot(sess_numbers, y_hat, threadline_format, lw=1)
+
+    linear = f"y={z[0]:0.10f}x{z[1]:+0.10f}"
+    r2 = f"R^2 = {r2_score(avg_val, y_hat):0.5f}"
+
+    # plt.gca().text(0.05, 0.95, text, transform=plt.gca().transAxes, fontsize=14, verticalalignment='top')
+
+    return plt, linear, r2
+
+
+def makeGraph(composition_obj, output_path, client2view_name):
+    print("Plotting/Saving for {} ...".format(client2view_name))
+
+    if TOPICS_TO_SHOW == 'ORS':
+        print("Plotting/Saving ORS topics ...")
+        neg_sess_numbers, neg_avg_val = process_sess_avg_arrays(composition_obj, NEG_ORS_TOPICS)
+        pos_sess_numbers, pos_avg_val = process_sess_avg_arrays(composition_obj, POS_ORS_TOPICS)
+        _plt, neg_linear, neg_r2 = plot_curve(plt, neg_sess_numbers, neg_avg_val, "ro-", "r--")
+        _plt, pos_linear, pos_r2 = plot_curve(_plt, pos_sess_numbers, pos_avg_val, "go-", "g--")
+
+        # design plot
+        plt.suptitle('Client Name: \n{0}'.format(reverse(client2view_name)), fontsize=15)
+        plt.xlabel('Session number', fontsize=10)
+        plt.ylabel('Topic signal', fontsize=10)
+        if PLT_SAVE:
+            out_str = output_path + client2view_name + '.png'
+            plt.savefig(out_str, dpi=DPI)
+        if PLT_SHOW:
+            plt.show()
+        plt.close()
+
+        # save functions stats
+        stats_d = dict()
+        stats_d[NEG_THREADLINE_FUNC] = neg_linear
+        stats_d[NEG_R2] = neg_r2
+        stats_d[POS_THREADLINE_FUNC] = pos_linear
+        stats_d[POS_R2] = pos_r2
+        print(stats_d)
+        if PLT_SAVE:
+            out_str = output_path + client2view_name + '.func'
+            with open(out_str, 'w') as f:
+                json.dump(stats_d, f)
+
+
 def filterTopics(composition_obj):
     filtered_composition_obj = composition_obj
 
     # all that thing happens only when there are special topics to show
-    if len(TOPICS_TO_SHOW) > 0:
-
+    if TOPICS_TO_SHOW == 'ORS':
+        only_topics = ORS_TOPICS
+    elif TOPICS_TO_SHOW == 'PSQ':
+        only_topics = PSQ_TOPICS
+    elif len(TOPICS_TO_SHOW) > 0:
+        only_topics = TOPICS_TO_SHOW
         filtered_composition_obj = []
         for item in composition_obj:
             session_num = item[0]
@@ -82,7 +184,7 @@ def filterTopics(composition_obj):
             file_name = item[2]
             t_probs = item[3]
             t_probs_ordered = {}
-            for t in TOPICS_TO_SHOW:
+            for t in only_topics:
                 if t not in t_probs:
                     raise "topic {0} is unvalid".format(t)
                 t_probs_ordered[t] = t_probs[t]
@@ -145,59 +247,6 @@ def process_file(file_name, client2view_name):
     composition_obj = filterTopics(composition_obj_sorted)
 
     return composition_obj
-
-
-def makeGraph(composition_obj, output_path, client2view_name):
-    print("Plotting/Saving for {}".format(client2view_name))
-    docs_topics_dist_list = []
-    docs_number = []
-    for doc in composition_obj:
-        docs_number.append(doc[0])
-        probs_dict = doc[3]
-        if len(TOPICS_TO_SHOW) > 0:
-            # dont sort by the numerical topic number. use the TOPICS_TO_SHOW order
-            docs_topics_dist_list.append([probs_dict[key] for key in (probs_dict.keys())])
-        else:
-            docs_topics_dist_list.append([probs_dict[key] for key in sorted(probs_dict.keys())])
-    docs_topics_dist = np.array(docs_topics_dist_list)
-    docs_topics_numbers_list = [str(i) for i in list(probs_dict.keys())]
-
-    df = DataFrame(docs_topics_dist, dtype=float, index=docs_number).T
-
-    # annot: show values over the cells
-    dashboard = sns.heatmap(df, annot=False)
-    # just rotate the xticks labels
-    dashboard.set_xticklabels(dashboard.get_xticklabels(), rotation=0)
-    if len(TOPICS_TO_SHOW) > 0:
-        T = np.arange(len(docs_topics_numbers_list))+0.5
-        dashboard.set_yticks(T)
-        # just rotate (straight) the yticks labels
-        dashboard.set_yticklabels(docs_topics_numbers_list, rotation=0)
-        # dashboard.grid()
-    else:
-        dashboard.set_yticklabels(docs_topics_numbers_list, minor=True)
-        dashboard.grid()
-
-    plt.suptitle('Client Name: \n{0}'.format(reverse(client2view_name)), fontsize=15)
-    # plt.suptitle('Gali\'s ORS topics (poor outcome)'.format(reverse(client2view_name)), fontsize=15)
-    # plt.suptitle('Noya\'s ORS topics (good outcome)'.format(reverse(client2view_name)), fontsize=15)
-    # plt.suptitle('Gali\'s PSQ topics (poor outcome)'.format(reverse(client2view_name)), fontsize=15)
-    # plt.suptitle('Noya\'s PSQ topics (good outcome)'.format(reverse(client2view_name)), fontsize=15)
-
-    plt.xlabel('Session Number', fontsize=10)
-    plt.ylabel('Topic Number', fontsize=10)
-
-    if PLT_SAVE:
-        out_str = output_path + client2view_name + '.png'
-        if DPI is not None:
-            plt.savefig(out_str, dpi=DPI)
-        else:
-            plt.savefig(out_str)
-
-    if PLT_SHOW:
-        plt.show()
-
-    plt.close()
 
 
 def extractMetaData(composition_obj):
@@ -282,7 +331,7 @@ if __name__ == '__main__':
 
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
-        exportTopicsDist(composition_obj, output_path, client2view_name)
+        # exportTopicsDist(composition_obj, output_path, client2view_name)
         getTopTopics(composition_obj)
         makeGraph(composition_obj, output_path, client2view_name)
 
