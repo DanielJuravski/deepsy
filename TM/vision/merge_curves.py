@@ -10,9 +10,14 @@ from visualizeTopics_curve import NEG_THREADLINE_FUNC, NEG_R2, POS_THREADLINE_FU
 CURVE_FUNC_FILES = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results/Topic_Visualize/curve/'
 OUTPUT_DIR = '/home/daniel/deepsy/TM/Dirs_of_Docs/c_sessions/results/Topic_Visualize/curve/avg/'
 TOPICS = 'ORS'
+
 CLIENTS = 'לב מב'
-CLIENTS = 'לב מב כג ש עה'  # good
-CLIENTS = 'עא ד ה יא ז'  # poor
+GOOD_CLIENTS_5 = 'לב מב כג ש עה'  # good (verified)
+POOR_CLIENTS_5 = 'עא ד ה יא ז'  # poor (verified)
+GOOD_CLIENTS_10 = 'לב מב כג ש עה ב כא מא ס סב'  # good
+POOR_CLIENTS_10 = 'עא ד ה יא ז א לט מו נט עד'  # poor
+
+CLIENTS = POOR_CLIENTS_10
 
 PLT_SHOW = True
 PLT_SAVE = True
