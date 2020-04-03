@@ -3,8 +3,10 @@ import xlrd
 import sys
 
 # SBS columns names
-DYAD = 'c_id'  # 'dyad'
-SESSION_N = 'date'
+CID = 'c_id'  # 'dyad'
+CINIT = 'c_init'
+TINIT = 't_init'
+SESSION_N = 'session_n'
 C_B_ORS = 'ors_sum'
 
 NUM_OF_SESSIONS = 3
@@ -28,7 +30,7 @@ def getOptions():
         output_option_i = sys.argv.index('--output')
         output_name = sys.argv[output_option_i + 1]
     else:
-        output_name = 'my_ors_composition_stat.txt'
+        output_name = 'my_ors_composition_stat_02.txt'
 
     return file_name, sheet_name, output_name
 
@@ -39,7 +41,10 @@ def loadData():
     session_n_list = []
     c_b_ors_list = []
     for i, row in df.iterrows():
-        dyad = row[DYAD]
+        c_id = row[CID]
+        c_init = row[CINIT]
+        t_init = row[TINIT]
+        dyad = c_init.lower() + str(c_id) + t_init.lower()
         session_n = row[SESSION_N]
         c_b_ors = row[C_B_ORS]
         try:
@@ -71,7 +76,7 @@ def getStat(c_dict):
             first_avg = 'N/A'
             last_avg = 'N/A'
             rci = 'N/A'
-            success = 'failure'
+            success = 'N/A'
         else:
             for session in range(NUM_OF_SESSIONS):
                 # c_dict is {client} = {(c_seesion, c_ors)}
@@ -81,11 +86,29 @@ def getStat(c_dict):
                 last_3_ors.append(round(float(c_dict[c][1][-session-1]), 2))
                 first_avg += float(c_dict[c][1][session])
                 last_avg += float(c_dict[c][1][-session-1])
-            first_avg = round(first_avg/(NUM_OF_SESSIONS*1.0), 2)
-            last_avg = round(last_avg/(NUM_OF_SESSIONS*1.0), 2)
+            # how many times ors == 0.0 (the sum value is null)
+            # if 1,2 - make the avg costumly, if 3 - set the success to N/A
+            first_zero_val_count = first_3_ors.count(0.0)
+            last_zero_val_count = last_3_ors.count(0.0)
 
-            rci = round(last_avg - first_avg, 2)
-            success = 'success' if rci > RCI_MARGIN else 'failure'
+            if first_zero_val_count != 3 and last_zero_val_count != 3:
+                first_avg = round(first_avg / ((NUM_OF_SESSIONS - first_zero_val_count) * 1.0), 2)
+                last_avg = round(last_avg / ((NUM_OF_SESSIONS - last_zero_val_count) * 1.0), 2)
+
+                rci = round(last_avg - first_avg, 2)
+                success = 'good' if rci > RCI_MARGIN else 'poor'
+            elif first_zero_val_count == 3:
+                first_avg = 'N/A'
+                rci = 'N/A'
+                success = 'N/A'
+                if last_zero_val_count == 3:
+                    last_avg = 'N/A'
+                    rci = 'N/A'
+                    success = 'N/A'
+                else:
+                    last_avg = round(last_avg / ((NUM_OF_SESSIONS - last_zero_val_count) * 1.0), 2)
+            else:
+                first_avg = round(first_avg / ((NUM_OF_SESSIONS - first_zero_val_count) * 1.0), 2)
 
         c_stat[c] = (first_session_n, last_session_n, first_3_ors, last_3_ors, first_avg, last_avg, rci, success)
 
@@ -113,7 +136,7 @@ def calcORS(dyad_list, session_n_list, c_b_ors_list):
     return c_stat
 
 
-def print2file(c_stat, output_name):
+def print2file(c_stat, output_name, cid2dyad):
     # c_stat is (first_session_n, last_session_n, first_3_ors, last_3_ors, first_avg, last_avg, rci, success)
     with open(output_name, 'w') as f:
         for c in c_stat:
@@ -123,18 +146,22 @@ def print2file(c_stat, output_name):
             else:
                 pre_ors_avg_under = "N/A"
                 post_ors_avg_over = "N/A"
-            string = 'c_id:[{0}]\n' \
-                     '{1}_first sessions:{2}  ' \
-                     '{1}_last sessions:{3}  ' \
-                     '{1} first ORS:{4}  ' \
-                     '{1} last ORS:{5}  ' \
-                     '{1} first ORS avg:{6}  ' \
-                     '{1} last ORS avg:{7}  ' \
-                     'RCI={8}  ' \
-                     'pre_ors_avg_under:{10}  ' \
-                     'post_ors_avg_over:{11}  ' \
-                     'Change:{9}' \
-                     '\n\n'.format(c, NUM_OF_SESSIONS, c_stat[c][0], c_stat[c][1], c_stat[c][2], c_stat[c][3], c_stat[c][4], c_stat[c][5], c_stat[c][6], c_stat[c][7], pre_ors_avg_under, post_ors_avg_over)
+            try:
+                dyad = cid2dyad[str(c)]
+            except KeyError:
+                dyad = "N/A"
+            string = 'c_id:{0}\t' \
+                     '{1}_first_sessions:{2}\t' \
+                     '{1}_last_sessions:{3}\t' \
+                     '{1}_first_ORS:{4}\t' \
+                     '{1}_last_ORS:{5}\t' \
+                     '{1}_first_ORS_avg:{6}\t' \
+                     '{1}_last_ORS_avg:{7}\t' \
+                     'RCI:{8}\t' \
+                     '{1}_first_ors_avg_under_24:{10}\t' \
+                     '{1}_last_ors_avg_over_24:{11}\t' \
+                     'Change:{9}\t' \
+                     'dyad:{12}\n'.format(c, NUM_OF_SESSIONS, c_stat[c][0], c_stat[c][1], c_stat[c][2], c_stat[c][3], c_stat[c][4], c_stat[c][5], c_stat[c][6], c_stat[c][7], pre_ors_avg_under, post_ors_avg_over, dyad)
             f.write(string)
 
 
@@ -147,10 +174,25 @@ def is_float_number(s):
     return True
 
 
+def load_ciddyad_mapping():
+    dyad2cid = {}
+    with open('dyay2cid.txt', 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            (dyay, cid, cinit, tinit) = line.split('\t')
+            tinit = tinit.split()[0]  # remove \n
+            ccode = cinit.lower() + str(cid) + tinit.lower()
+            dyad2cid[dyay] = ccode
+    cid2dyad = {v: k for k, v in dyad2cid.items()}
+
+    return cid2dyad, dyad2cid
+
+
 if __name__ == '__main__':
     xlsx_file_name, sheet_name, output_name = getOptions()
     dyad_list, session_n_list, c_b_ors_list = loadData()
     c_stat = calcORS(dyad_list, session_n_list, c_b_ors_list)
-    print2file(c_stat, output_name)
+    cid2dyad, dyad2cid = load_ciddyad_mapping()
+    print2file(c_stat, output_name, cid2dyad)
 
 

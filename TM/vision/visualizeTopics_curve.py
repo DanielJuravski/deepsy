@@ -40,7 +40,7 @@ NEG_R2 = "neg_r2"
 POS_THREADLINE_FUNC = "pos_threadline_func"
 POS_R2 = "pos_r2"
 
-PLT_SHOW = True
+PLT_SHOW = False
 PLT_SAVE = False
 DPI = 200
 TOP_TOPICS_K = 4
@@ -157,7 +157,7 @@ def plot_curve(plt, sess_numbers, avg_val, dots_format, threadline_format):
     return plt, linear, r2
 
 
-def makeGraph(composition_obj, output_path, client2view_name, raw_stat_output_path):
+def makeGraph(composition_obj, output_path, client2view_name):
     print("Plotting/Saving for {} ...".format(client2view_name))
 
     if TOPICS_TO_SHOW == 'ORS':
@@ -367,16 +367,16 @@ def get_raw_stat(composition_obj, client2view_name):
            'psq_avg_val': psq_avg_val, 'psq_w_avg_val': psq_w_avg_val}
 
 
-def dump_stats(raw_stat_dict, raw_stat_output_path):
+def dump_stats(raw_stat_dict, ors_info, raw_stat_output_path):
     file_name = raw_stat_output_path + "stats" + '.tsv'
-    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val"
+    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val\tf3_ors_avg\tl3_ors_avg\tresult"
     with open(file_name, 'w') as f:
         f.writelines(labels+'\n')
         # print lines for every requested client
         for client_name, client_stats in raw_stat_dict.items():
             # print each piece of data in a new line
             for i, _ in enumerate(client_stats["sess_numbers"]):
-                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(
+                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".format(
                     client_name,
                     client_stats["sess_numbers"][i],
                     client_stats["pos_avg_val"][i],
@@ -384,19 +384,46 @@ def dump_stats(raw_stat_dict, raw_stat_output_path):
                     client_stats["neg_avg_val"][i],
                     client_stats["neg_w_avg_val"][i],
                     client_stats["psq_avg_val"][i],
-                    client_stats["psq_w_avg_val"][i]
+                    client_stats["psq_w_avg_val"][i],
+                    ors_info[client_name]['3_first_ORS_avg'],
+                    ors_info[client_name]['3_last_ORS_avg'],
+                    ors_info[client_name]['Change']
                 )
                 f.writelines(line)
+    pass
+
+
+def load_ors_stat_file():
+    ors_info = {}
+    with open('/home/daniel/deepsy/SBS_Analize/sbs_ors_stat/my_ors_composition_stat_02.txt', 'r') as f:
+        lines = f.readlines()
+        for fields in lines:
+            for attr in fields.split('\t'):
+                if 'dyad' in attr:
+                    dyad = attr.split('dyad:')[1].split('\n')[0]  # remove \n
+                elif '3_first_ORS_avg' in attr:
+                    f3_ors = attr.split('3_first_ORS_avg:')[1]
+                elif '3_last_ORS_avg' in attr:
+                    l3_ors = attr.split('3_last_ORS_avg:')[1]
+                elif 'Change' in attr:
+                    result = attr.split('Change:')[1]
+            ors_info[dyad] = {'3_first_ORS_avg': f3_ors,
+                              '3_last_ORS_avg': l3_ors,
+                              'Change': result}
+
+    return ors_info
 
 
 if __name__ == '__main__':
     file_name, output_path, client2view_name_list, raw_stat_output_path = getOptions()
     raw_stat_dict = {}
+    ors_info = load_ors_stat_file()
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
         # exportTopicsDist(composition_obj, output_path, client2view_name) # for projector
         # getTopTopics(composition_obj) # print top topic for each session - not relevant when the topics filtered
-        makeGraph(composition_obj, output_path, client2view_name, raw_stat_output_path)
+        # makeGraph(composition_obj, output_path, client2view_name)
         raw_stat_dict[client2view_name] = get_raw_stat(composition_obj, client2view_name)
-    dump_stats(raw_stat_dict, raw_stat_output_path)
+
+    dump_stats(raw_stat_dict, ors_info, raw_stat_output_path)
 
