@@ -22,6 +22,12 @@ ORS_TOPICS = NEG_ORS_TOPICS + POS_ORS_TOPICS  # ORS (neg->pos)
 # TOPICS_TO_SHOW = [94, 50, 199, 2]  # HSCL
 PSQ_TOPICS = [22, 165, 133, 48]  # PSQ
 
+# /home/daniel/deepsy/Supervised/Topics2Labels/cand_results/08_11_2019_00_48_30.txt
+# /home/daniel/deepsy/Supervised/Topics2Labels/cand_results/10_11_2019_11_53_28.txt
+NEG_ORS_TOPICS_W = [22.736019662399535, 17.25142348481869, 16.441510366804366, 14.062184735163502]
+POS_ORS_TOPICS_W = [29.235895003369667, 28.75764447207576, 21.37508843010463, 19.42639921802189, 17.198205040342042]
+PSQ_TOPICS_W = [29.336153287093, 20.70682403536931, 19.900099249455856, 16.786830244928957]
+
 TOPICS_TO_SHOW = 'ORS'
 # TOPICS_TO_SHOW = 'PSQ'
 # TOPICS_TO_SHOW = [1,2,3,4,5]
@@ -34,8 +40,8 @@ NEG_R2 = "neg_r2"
 POS_THREADLINE_FUNC = "pos_threadline_func"
 POS_R2 = "pos_r2"
 
-PLT_SHOW = False
-PLT_SAVE = True
+PLT_SHOW = True
+PLT_SAVE = False
 DPI = 200
 TOP_TOPICS_K = 4
 
@@ -62,11 +68,12 @@ def getOptions():
         # output_path = '.'
         output_path = getCurrentResultsDir(file_name) + 'Topic_Visualize/curve/'
     ifNotExistCreate(output_path)
+    raw_stat_output_path = getCurrentResultsDir(file_name) + 'raw_stats/'
 
     print("Visualizing: {0}".format(file_name))
     print("Visualizing only for {0}".format(client2view_name))
 
-    return file_name, output_path, client2view_name
+    return file_name, output_path, client2view_name, raw_stat_output_path
 
 
 def getCurrentResultsDir(file_name):
@@ -82,8 +89,11 @@ def ifNotExistCreate(dir_path):
         os.makedirs(dir_path)
 
 
-def get_avg(d):
-    "get dict of {[topic number]: prob} and return the avg"
+def get_avg(d, weights):
+    """get dict of {[topic number]: prob} and return:
+    1. simple avg
+    2. weighted avg (from the SMLR feature ranking weights"""
+    # avg
     sum = 0
     topics_num = 0
     for k,v in d.items():
@@ -92,30 +102,44 @@ def get_avg(d):
 
     avg = sum/topics_num
 
-    return avg
+    # weighted avg
+    sum = 0
+    w_sumn = 0
+    for i, (k,v) in enumerate(d.items()):
+        w = weights[i]
+        sum += float(v)*w
+        w_sumn += w
+
+    w_avg = sum/w_sumn
+
+    return avg, w_avg
 
 
-def process_sess_avg_arrays(composition_obj, topics_list):
+def process_sess_avg_arrays(composition_obj, topics_list, weights):
     filtered_composition_obj = deepcopy(composition_obj)
     for sess_i, _ in enumerate(composition_obj):
         all_topics_probs = composition_obj[sess_i][3]
         for t in all_topics_probs.keys():
             if t not in topics_list:
                 del filtered_composition_obj[sess_i][3][t]
-        avg_prob = get_avg(filtered_composition_obj[sess_i][3])
-        filtered_composition_obj[sess_i] = filtered_composition_obj[sess_i] + (avg_prob,)  # neg_composition_obj[sess_i][4] == avg
+        avg_prob, w_avg_prob = get_avg(filtered_composition_obj[sess_i][3], weights)
+        filtered_composition_obj[sess_i] = filtered_composition_obj[sess_i] + (avg_prob,)  # -> that line means: composition_obj[sess_i][4] == avg
+        filtered_composition_obj[sess_i] = filtered_composition_obj[sess_i] + (w_avg_prob,)  # -> that line means: composition_obj[sess_i][5] == w_avg
     # make session number and avg scores arrays
     sess_numbers = []
     avg_val = []
+    w_avg_val = []
     for sess in filtered_composition_obj:
         sess_numbers.append(sess[0])
         avg_val.append(sess[4])
+        w_avg_val.append(sess[5])
         # print("{0}\t{1}".format(sess[0], sess[4]))
 
     nd_sess_numbers = np.asarray(sess_numbers)
     nd_avg_val = np.asarray(avg_val)
+    nd_w_avg_val = np.asarray(w_avg_val)
 
-    return nd_sess_numbers, nd_avg_val
+    return nd_sess_numbers, nd_avg_val, nd_w_avg_val
 
 
 def plot_curve(plt, sess_numbers, avg_val, dots_format, threadline_format):
@@ -133,13 +157,13 @@ def plot_curve(plt, sess_numbers, avg_val, dots_format, threadline_format):
     return plt, linear, r2
 
 
-def makeGraph(composition_obj, output_path, client2view_name):
+def makeGraph(composition_obj, output_path, client2view_name, raw_stat_output_path):
     print("Plotting/Saving for {} ...".format(client2view_name))
 
     if TOPICS_TO_SHOW == 'ORS':
         print("Plotting/Saving ORS topics ...")
-        neg_sess_numbers, neg_avg_val = process_sess_avg_arrays(composition_obj, NEG_ORS_TOPICS)
-        pos_sess_numbers, pos_avg_val = process_sess_avg_arrays(composition_obj, POS_ORS_TOPICS)
+        neg_sess_numbers, neg_avg_val, neg_w_avg_val = process_sess_avg_arrays(composition_obj, NEG_ORS_TOPICS, NEG_ORS_TOPICS_W)
+        pos_sess_numbers, pos_avg_val, pos_w_avg_val = process_sess_avg_arrays(composition_obj, POS_ORS_TOPICS, POS_ORS_TOPICS_W)
         _plt, neg_linear, neg_r2 = plot_curve(plt, neg_sess_numbers, neg_avg_val, "ro-", "r--")
         _plt, pos_linear, pos_r2 = plot_curve(_plt, pos_sess_numbers, pos_avg_val, "go-", "g--")
 
@@ -165,6 +189,10 @@ def makeGraph(composition_obj, output_path, client2view_name):
             out_str = output_path + client2view_name + '.func'
             with open(out_str, 'w') as f:
                 json.dump(stats_d, f)
+    # PSQ
+    elif TOPICS_TO_SHOW == 'PSQ':
+        pass
+    return
 
 
 def filterTopics(composition_obj):
@@ -326,12 +354,49 @@ def getTopTopics(composition_obj):
         print("\t", key, val)
 
 
-if __name__ == '__main__':
-    file_name, output_path, client2view_name_list = getOptions()
+def get_raw_stat(composition_obj, client2view_name):
+    print("Calculating stats for {} ...".format(client2view_name))
 
+    sess_numbers, neg_avg_val, neg_w_avg_val = process_sess_avg_arrays(composition_obj, NEG_ORS_TOPICS, NEG_ORS_TOPICS_W)
+    sess_numbers, pos_avg_val, pos_w_avg_val = process_sess_avg_arrays(composition_obj, POS_ORS_TOPICS, POS_ORS_TOPICS_W)
+    sess_numbers, psq_avg_val, psq_w_avg_val = process_sess_avg_arrays(composition_obj, PSQ_TOPICS, PSQ_TOPICS_W)
+
+    return {'sess_numbers': sess_numbers,
+           'neg_avg_val': neg_avg_val, 'neg_w_avg_val': neg_w_avg_val,
+           'pos_avg_val': pos_avg_val, 'pos_w_avg_val': pos_w_avg_val,
+           'psq_avg_val': psq_avg_val, 'psq_w_avg_val': psq_w_avg_val}
+
+
+def dump_stats(raw_stat_dict, raw_stat_output_path):
+    file_name = raw_stat_output_path + "stats" + '.tsv'
+    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val"
+    with open(file_name, 'w') as f:
+        f.writelines(labels+'\n')
+        # print lines for every requested client
+        for client_name, client_stats in raw_stat_dict.items():
+            # print each piece of data in a new line
+            for i, _ in enumerate(client_stats["sess_numbers"]):
+                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(
+                    client_name,
+                    client_stats["sess_numbers"][i],
+                    client_stats["pos_avg_val"][i],
+                    client_stats["pos_w_avg_val"][i],
+                    client_stats["neg_avg_val"][i],
+                    client_stats["neg_w_avg_val"][i],
+                    client_stats["psq_avg_val"][i],
+                    client_stats["psq_w_avg_val"][i]
+                )
+                f.writelines(line)
+
+
+if __name__ == '__main__':
+    file_name, output_path, client2view_name_list, raw_stat_output_path = getOptions()
+    raw_stat_dict = {}
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
-        # exportTopicsDist(composition_obj, output_path, client2view_name)
-        getTopTopics(composition_obj)
-        makeGraph(composition_obj, output_path, client2view_name)
+        # exportTopicsDist(composition_obj, output_path, client2view_name) # for projector
+        # getTopTopics(composition_obj) # print top topic for each session - not relevant when the topics filtered
+        makeGraph(composition_obj, output_path, client2view_name, raw_stat_output_path)
+        raw_stat_dict[client2view_name] = get_raw_stat(composition_obj, client2view_name)
+    dump_stats(raw_stat_dict, raw_stat_output_path)
 
