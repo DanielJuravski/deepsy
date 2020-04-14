@@ -11,6 +11,7 @@ from pathlib import Path
 from copy import deepcopy
 from sklearn.metrics import r2_score
 import json
+import yaml
 
 
 # TOPICS_TO_SHOW = []
@@ -367,16 +368,23 @@ def get_raw_stat(composition_obj, client2view_name):
            'psq_avg_val': psq_avg_val, 'psq_w_avg_val': psq_w_avg_val}
 
 
-def dump_stats(raw_stat_dict, ors_info, raw_stat_output_path):
+def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, raw_stat_output_path):
     file_name = raw_stat_output_path + "stats" + '.tsv'
-    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val\tf3_ors_avg\tl3_ors_avg\tresult"
+    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val\tf3_ors_avg\tl3_ors_avg\tors_result\tf3_hscl_avg\tl3_hscl_avg\tf3_c_wai_avg\tl3_c_wai_avg\tf3_t_wai_avg\tl3_t_wai_avg\tbq_start\tbq_end"
     with open(file_name, 'w') as f:
         f.writelines(labels+'\n')
         # print lines for every requested client
         for client_name, client_stats in raw_stat_dict.items():
             # print each piece of data in a new line
+            # special care for bq info
+            if client_name in bq_info:
+                bq_start = bq_info[client_name]['oq_sum_S']
+                bq_end = bq_info[client_name]['oq_sum_E']
+            else:
+                bq_start = 'N/A'
+                bq_end = 'N/A'
             for i, _ in enumerate(client_stats["sess_numbers"]):
-                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".format(
+                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}\t{15}\t{16}\t{17}\t{18}\n".format(
                     client_name,
                     client_stats["sess_numbers"][i],
                     client_stats["pos_avg_val"][i],
@@ -387,10 +395,32 @@ def dump_stats(raw_stat_dict, ors_info, raw_stat_output_path):
                     client_stats["psq_w_avg_val"][i],
                     ors_info[client_name]['3_first_ORS_avg'],
                     ors_info[client_name]['3_last_ORS_avg'],
-                    ors_info[client_name]['Change']
+                    ors_info[client_name]['Change'],
+                    hscl_info[client_name]['3_first_HSCL_avg'],
+                    hscl_info[client_name]['3_last_HSCL_avg'],
+                    wai_info[client_name]['3_first_c_WAI_avg'],
+                    wai_info[client_name]['3_last_c_WAI_avg'],
+                    wai_info[client_name]['3_first_t_WAI_avg'],
+                    wai_info[client_name]['3_last_t_WAI_avg'],
+                    bq_start,
+                    bq_end
                 )
                 f.writelines(line)
     pass
+
+
+def load_ciddyad_mapping():
+    dyad2cid = {}
+    with open('/home/daniel/deepsy/SBS_Analize/sbs_ors_stat/dyay2cid.txt', 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            (dyay, cid, cinit, tinit) = line.split('\t')
+            tinit = tinit.split()[0]  # remove \n
+            ccode = cinit.lower() + str(cid)# + tinit.lower() # for bq
+            dyad2cid[dyay] = ccode
+    cid2dyad = {v: k for k, v in dyad2cid.items()}
+
+    return cid2dyad, dyad2cid
 
 
 def load_ors_stat_file():
@@ -414,10 +444,81 @@ def load_ors_stat_file():
     return ors_info
 
 
+def load_hscl_stat_file():
+    hscl_info = {}
+    with open('/home/daniel/deepsy/SBS_Analize/sbs_ors_stat/my_hscl_composition_stat_01.txt', 'r') as f:
+        lines = f.readlines()
+        for fields in lines:
+            for attr in fields.split('\t'):
+                if 'dyad' in attr:
+                    dyad = attr.split('dyad:')[1].split('\n')[0]  # remove \n
+                elif '3_first_HSCL_avg' in attr:
+                    f3_ors = attr.split('3_first_HSCL_avg:')[1]
+                elif '3_last_HSCL_avg' in attr:
+                    l3_ors = attr.split('3_last_HSCL_avg:')[1]
+
+            hscl_info[dyad] = {'3_first_HSCL_avg': f3_ors,
+                              '3_last_HSCL_avg': l3_ors}
+
+    return hscl_info
+
+
+def load_wai_stat_file():
+    wai_info = {}
+    with open('/home/daniel/deepsy/SBS_Analize/sbs_ors_stat/my_wai_composition_stat_01.txt', 'r') as f:
+        lines = f.readlines()
+        for fields in lines:
+            for attr in fields.split('\t'):
+                if 'dyad' in attr:
+                    dyad = attr.split('dyad:')[1].split('\n')[0]  # remove \n
+                elif '3_first_c_WAI_avg' in attr:
+                    f3_c_wai = attr.split('3_first_c_WAI_avg:')[1]
+                elif '3_last_c_WAI_avg' in attr:
+                    l3_c_wai = attr.split('3_last_c_WAI_avg:')[1]
+                elif '3_first_t_WAI_avg' in attr:
+                    f3_t_wai = attr.split('3_first_t_WAI_avg:')[1]
+                elif '3_last_t_WAI_avg' in attr:
+                    l3_t_wai = attr.split('3_last_t_WAI_avg:')[1]
+
+            wai_info[dyad] = {'3_first_c_WAI_avg': f3_c_wai,
+                               '3_last_c_WAI_avg': l3_c_wai,
+                               '3_first_t_WAI_avg': f3_t_wai,
+                               '3_last_t_WAI_avg': l3_t_wai}
+
+    return wai_info
+
+
+def load_bq_stat_file(cid2dyad):
+    bq_info = {}
+    with open('/home/daniel/deepsy/SBS_Analize/BQ_Analize/bq_oq_sagnificant_change.txt', 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            c_init, details = line.split('\t')
+            details_d = yaml.load(details)
+            if 'c_id_S' in details_d and 'c_id_E' in details_d:
+                c_id = details_d['c_id_S']
+                c_init_c_id = c_init+str(c_id)
+                if c_init_c_id in cid2dyad:
+                    dyad = cid2dyad[c_init_c_id]
+                    bq_start = details_d['oq_sum_S']
+                    bq_end = details_d['oq_sum_E']
+                    bq_info[dyad] = {'oq_sum_S': bq_start, 'oq_sum_E': bq_end}
+                else:
+                    print("no dyad for {0}".format(c_init_c_id))
+            else:
+                print("no start/end bq info for {0}".format(c_init))
+
+    return bq_info
+
+
 if __name__ == '__main__':
     file_name, output_path, client2view_name_list, raw_stat_output_path = getOptions()
+    cid2dyad, dyad2cid = load_ciddyad_mapping()
     raw_stat_dict = {}
     ors_info = load_ors_stat_file()
+    hscl_info = load_hscl_stat_file()
+    wai_info = load_wai_stat_file()
+    bq_info = load_bq_stat_file(cid2dyad)
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
         # exportTopicsDist(composition_obj, output_path, client2view_name) # for projector
@@ -425,5 +526,5 @@ if __name__ == '__main__':
         # makeGraph(composition_obj, output_path, client2view_name)
         raw_stat_dict[client2view_name] = get_raw_stat(composition_obj, client2view_name)
 
-    dump_stats(raw_stat_dict, ors_info, raw_stat_output_path)
+    dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, raw_stat_output_path)
 

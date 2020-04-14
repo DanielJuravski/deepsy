@@ -132,5 +132,5 @@ def oq_stats(clients):
 if __name__ == '__main__':
     unfiltered_data = loadFile()
     clients = arrange(unfiltered_data)
-    # write(clients)
+    write(clients)
     oq_stats(clients)
