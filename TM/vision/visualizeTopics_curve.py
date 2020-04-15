@@ -368,9 +368,26 @@ def get_raw_stat(composition_obj, client2view_name):
            'psq_avg_val': psq_avg_val, 'psq_w_avg_val': psq_w_avg_val}
 
 
-def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, raw_stat_output_path):
+def get_i_score(info, client_name, key, i):
+    try:
+        score = info[client_name][key].strip('][').split(', ')[i]
+    except IndexError:
+        score = 'N/A'
+
+    return score
+
+
+def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, psq_info, raw_stat_output_path):
     file_name = raw_stat_output_path + "stats" + '.tsv'
-    labels = "LR\tclient_name\tsess_numbers\tpos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\tpsq_avg_val\tpsq_w_avg_val\tf3_ors_avg\tl3_ors_avg\tors_result\tf3_hscl_avg\tl3_hscl_avg\tf3_c_wai_avg\tl3_c_wai_avg\tf3_t_wai_avg\tl3_t_wai_avg\tbq_start\tbq_end"
+    labels = "LR\tclient_name\tsess_numbers\t" \
+             "pos_avg_val\tpos_w_avg_val\tneg_avg_val\tneg_w_avg_val\t" \
+             "psq_avg_val\tpsq_w_avg_val\t" \
+             "f3_ors_avg\tl3_ors_avg\tors_result\t" \
+             "f3_hscl_avg\tl3_hscl_avg\tall_HSCL\t" \
+             "f3_c_wai_avg\tl3_c_wai_avg\tf3_t_wai_avg\tl3_t_wai_avg\tall_c_wai\tall_t_wai\t" \
+             "bq_start\tbq_end\t" \
+             "f3_c_psq_avg\tl3_c_psq_avg\tf3_t_psq_avg\tl3_t_psq_avg\tall_c_psq\tall_t_psq"
+
     with open(file_name, 'w') as f:
         f.writelines(labels+'\n')
         # print lines for every requested client
@@ -384,28 +401,38 @@ def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, raw_stat_o
                 bq_start = 'N/A'
                 bq_end = 'N/A'
             for i, _ in enumerate(client_stats["sess_numbers"]):
-                line = "LR\t{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}\t{15}\t{16}\t{17}\t{18}\n".format(
-                    client_name,
-                    client_stats["sess_numbers"][i],
-                    client_stats["pos_avg_val"][i],
-                    client_stats["pos_w_avg_val"][i],
-                    client_stats["neg_avg_val"][i],
-                    client_stats["neg_w_avg_val"][i],
-                    client_stats["psq_avg_val"][i],
-                    client_stats["psq_w_avg_val"][i],
-                    ors_info[client_name]['3_first_ORS_avg'],
-                    ors_info[client_name]['3_last_ORS_avg'],
-                    ors_info[client_name]['Change'],
-                    hscl_info[client_name]['3_first_HSCL_avg'],
-                    hscl_info[client_name]['3_last_HSCL_avg'],
-                    wai_info[client_name]['3_first_c_WAI_avg'],
-                    wai_info[client_name]['3_last_c_WAI_avg'],
-                    wai_info[client_name]['3_first_t_WAI_avg'],
-                    wai_info[client_name]['3_last_t_WAI_avg'],
-                    bq_start,
-                    bq_end
-                )
-                f.writelines(line)
+                line = ["LR", client_name,
+                        str(client_stats["sess_numbers"][i]),
+                        str(client_stats["pos_avg_val"][i]),
+                        str(client_stats["pos_w_avg_val"][i]),
+                        str(client_stats["neg_avg_val"][i]),
+                        str(client_stats["neg_w_avg_val"][i]),
+                        str(client_stats["psq_avg_val"][i]),
+                        str(client_stats["psq_w_avg_val"][i]),
+                        ors_info[client_name]['3_first_ORS_avg'],
+                        ors_info[client_name]['3_last_ORS_avg'],
+                        ors_info[client_name]['Change'],
+                        hscl_info[client_name]['3_first_HSCL_avg'],
+                        hscl_info[client_name]['3_last_HSCL_avg'],
+                        get_i_score(hscl_info, client_name, 'all_HSCL', i),
+                        wai_info[client_name]['3_first_c_WAI_avg'],
+                        wai_info[client_name]['3_last_c_WAI_avg'],
+                        wai_info[client_name]['3_first_t_WAI_avg'],
+                        wai_info[client_name]['3_last_t_WAI_avg'],
+                        get_i_score(wai_info, client_name, 'all_c_wai', i),
+                        get_i_score(wai_info, client_name, 'all_t_wai', i),
+                        str(bq_start),
+                        str(bq_end),
+                        psq_info[client_name]['3_first_c_psq_avg'],
+                        psq_info[client_name]['3_last_c_psq_avg'],
+                        psq_info[client_name]['3_first_t_psq_avg'],
+                        psq_info[client_name]['3_last_t_psq_avg'],
+                        get_i_score(psq_info, client_name, 'all_c_psq', i),
+                        get_i_score(psq_info, client_name, 'all_t_psq', i)
+                        ]
+                f.writelines('\t'.join(line))
+                f.writelines('\n')
+
     pass
 
 
@@ -456,9 +483,12 @@ def load_hscl_stat_file():
                     f3_ors = attr.split('3_first_HSCL_avg:')[1]
                 elif '3_last_HSCL_avg' in attr:
                     l3_ors = attr.split('3_last_HSCL_avg:')[1]
+                elif 'all_HSCL' in attr:
+                    all_HSCL = attr.split('all_HSCL:')[1]
 
             hscl_info[dyad] = {'3_first_HSCL_avg': f3_ors,
-                              '3_last_HSCL_avg': l3_ors}
+                               '3_last_HSCL_avg': l3_ors,
+                               'all_HSCL': all_HSCL}
 
     return hscl_info
 
@@ -479,11 +509,18 @@ def load_wai_stat_file():
                     f3_t_wai = attr.split('3_first_t_WAI_avg:')[1]
                 elif '3_last_t_WAI_avg' in attr:
                     l3_t_wai = attr.split('3_last_t_WAI_avg:')[1]
+                elif 'all_c_wai' in attr:
+                    all_c_wai = attr.split('all_c_wai:')[1]
+                elif 'all_t_wai' in attr:
+                    all_t_wai = attr.split('all_t_wai:')[1]
 
             wai_info[dyad] = {'3_first_c_WAI_avg': f3_c_wai,
-                               '3_last_c_WAI_avg': l3_c_wai,
-                               '3_first_t_WAI_avg': f3_t_wai,
-                               '3_last_t_WAI_avg': l3_t_wai}
+                              '3_last_c_WAI_avg': l3_c_wai,
+                              '3_first_t_WAI_avg': f3_t_wai,
+                              '3_last_t_WAI_avg': l3_t_wai,
+                              'all_c_wai': all_c_wai,
+                              'all_t_wai': all_t_wai
+                              }
 
     return wai_info
 
@@ -511,6 +548,37 @@ def load_bq_stat_file(cid2dyad):
     return bq_info
 
 
+def load_psq_stat_file():
+    psq_info = {}
+    with open('/home/daniel/deepsy/SBS_Analize/sbs_ors_stat/my_psq_composition_stat_01.txt', 'r') as f:
+        lines = f.readlines()
+        for fields in lines:
+            for attr in fields.split('\t'):
+                if 'dyad' in attr:
+                    dyad = attr.split('dyad:')[1].split('\n')[0]  # remove \n
+                elif '3_first_c_psq_avg' in attr:
+                    f3_c_psq = attr.split('3_first_c_psq_avg:')[1]
+                elif '3_last_c_psq_avg' in attr:
+                    l3_c_psq = attr.split('3_last_c_psq_avg:')[1]
+                elif '3_first_t_psq_avg' in attr:
+                    f3_t_psq = attr.split('3_first_t_psq_avg:')[1]
+                elif '3_last_t_psq_avg' in attr:
+                    l3_t_psq = attr.split('3_last_t_psq_avg:')[1]
+                elif 'all_c_psq' in attr:
+                    all_c_psq = attr.split('all_c_psq:')[1]
+                elif 'all_t_psq' in attr:
+                    all_t_psq = attr.split('all_t_psq:')[1]
+
+            psq_info[dyad] = {'3_first_c_psq_avg': f3_c_psq,
+                              '3_last_c_psq_avg': l3_c_psq,
+                              '3_first_t_psq_avg': f3_t_psq,
+                              '3_last_t_psq_avg': l3_t_psq,
+                              'all_c_psq': all_c_psq,
+                              'all_t_psq': all_t_psq}
+
+    return psq_info
+
+
 if __name__ == '__main__':
     file_name, output_path, client2view_name_list, raw_stat_output_path = getOptions()
     cid2dyad, dyad2cid = load_ciddyad_mapping()
@@ -518,6 +586,7 @@ if __name__ == '__main__':
     ors_info = load_ors_stat_file()
     hscl_info = load_hscl_stat_file()
     wai_info = load_wai_stat_file()
+    psq_info = load_psq_stat_file()
     bq_info = load_bq_stat_file(cid2dyad)
     for client2view_name in client2view_name_list.split():
         composition_obj = process_file(file_name, client2view_name)
@@ -526,5 +595,5 @@ if __name__ == '__main__':
         # makeGraph(composition_obj, output_path, client2view_name)
         raw_stat_dict[client2view_name] = get_raw_stat(composition_obj, client2view_name)
 
-    dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, raw_stat_output_path)
+    dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, psq_info, raw_stat_output_path)
 

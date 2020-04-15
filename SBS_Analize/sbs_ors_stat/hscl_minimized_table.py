@@ -65,6 +65,7 @@ def getStat(c_dict):
         last_session_n = []
         first_3_hscl = []
         last_3_hscl = []
+        all_c_hscl = c_dict[c][1]
         first_avg = 0
         last_avg = 0
 
@@ -111,7 +112,7 @@ def getStat(c_dict):
             else:
                 first_avg = round(first_avg / ((NUM_OF_SESSIONS - first_zero_val_count) * 1.0), 2)
 
-        c_stat[c] = (first_session_n, last_session_n, first_3_hscl, last_3_hscl, first_avg, last_avg, rci, success)
+        c_stat[c] = (first_session_n, last_session_n, first_3_hscl, last_3_hscl, first_avg, last_avg, all_c_hscl)
 
     return c_stat
 
@@ -160,7 +161,8 @@ def print2file(c_stat, output_name, cid2dyad):
                      '{1}_last_HSCL:{5}\t' \
                      '{1}_first_HSCL_avg:{6}\t' \
                      '{1}_last_HSCL_avg:{7}\t' \
-                     'dyad:{8}\n'.format(c, NUM_OF_SESSIONS, c_stat[c][0], c_stat[c][1], c_stat[c][2], c_stat[c][3], c_stat[c][4], c_stat[c][5], dyad)
+                     'all_HSCL:{8}\t' \
+                     'dyad:{9}\n'.format(c, NUM_OF_SESSIONS, c_stat[c][0], c_stat[c][1], c_stat[c][2], c_stat[c][3], c_stat[c][4], c_stat[c][5], c_stat[c][6], dyad)
             f.write(string)
 
 
