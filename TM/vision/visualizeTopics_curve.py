@@ -52,7 +52,7 @@ def getOptions():
         output_option_i = sys.argv.index('--client2view')
         client2view_name = sys.argv[output_option_i + 1]
     else:
-        client2view_name = 'א'
+        # client2view_name = 'א'
         client2view_name = 'א סד ו מא עח יא ש נח ג ח מז עז מג נג לט כ נ כג ז נו עא מח יד ס כה ב כו לב כא עט צ לח ר עד ט ד ע כב ק כח פא ת נא יז י טו מט עג מד מו סה כד נב פ יג עה סו ל כט מה לז יב יט יח ה סב נט עו טז סט מב סא כז מ'
 
     if '--input' in sys.argv:
@@ -370,7 +370,7 @@ def get_raw_stat(composition_obj, client2view_name):
 
 def get_i_score(info, client_name, key, i):
     try:
-        score = info[client_name][key].strip('][').split(', ')[i]
+        score = info[client_name][key].strip('\n').strip('][').split(', ')[i-1]  # -1 because i is session number (non c.s. iteration, starts form 1)
     except IndexError:
         score = 'N/A'
 
@@ -386,7 +386,8 @@ def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, psq_info, 
              "f3_hscl_avg\tl3_hscl_avg\tall_HSCL\t" \
              "f3_c_wai_avg\tl3_c_wai_avg\tf3_t_wai_avg\tl3_t_wai_avg\tall_c_wai\tall_t_wai\t" \
              "bq_start\tbq_end\t" \
-             "f3_c_psq_avg\tl3_c_psq_avg\tf3_t_psq_avg\tl3_t_psq_avg\tall_c_psq\tall_t_psq"
+             "f3_c_psq_avg\tl3_c_psq_avg\tf3_t_psq_avg\tl3_t_psq_avg\tall_c_psq\tall_t_psq\t" \
+             "all_ors"
 
     with open(file_name, 'w') as f:
         f.writelines(labels+'\n')
@@ -401,8 +402,9 @@ def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, psq_info, 
                 bq_start = 'N/A'
                 bq_end = 'N/A'
             for i, _ in enumerate(client_stats["sess_numbers"]):
+                session_n = client_stats["sess_numbers"][i]
                 line = ["LR", client_name,
-                        str(client_stats["sess_numbers"][i]),
+                        str(session_n),
                         str(client_stats["pos_avg_val"][i]),
                         str(client_stats["pos_w_avg_val"][i]),
                         str(client_stats["neg_avg_val"][i]),
@@ -414,21 +416,22 @@ def dump_stats(raw_stat_dict, ors_info, hscl_info, wai_info, bq_info, psq_info, 
                         ors_info[client_name]['Change'],
                         hscl_info[client_name]['3_first_HSCL_avg'],
                         hscl_info[client_name]['3_last_HSCL_avg'],
-                        get_i_score(hscl_info, client_name, 'all_HSCL', i),
+                        get_i_score(hscl_info, client_name, 'all_HSCL', session_n),
                         wai_info[client_name]['3_first_c_WAI_avg'],
                         wai_info[client_name]['3_last_c_WAI_avg'],
                         wai_info[client_name]['3_first_t_WAI_avg'],
                         wai_info[client_name]['3_last_t_WAI_avg'],
-                        get_i_score(wai_info, client_name, 'all_c_wai', i),
-                        get_i_score(wai_info, client_name, 'all_t_wai', i),
+                        get_i_score(wai_info, client_name, 'all_c_wai', session_n),
+                        get_i_score(wai_info, client_name, 'all_t_wai', session_n),
                         str(bq_start),
                         str(bq_end),
                         psq_info[client_name]['3_first_c_psq_avg'],
                         psq_info[client_name]['3_last_c_psq_avg'],
                         psq_info[client_name]['3_first_t_psq_avg'],
                         psq_info[client_name]['3_last_t_psq_avg'],
-                        get_i_score(psq_info, client_name, 'all_c_psq', i),
-                        get_i_score(psq_info, client_name, 'all_t_psq', i)
+                        get_i_score(psq_info, client_name, 'all_c_psq', session_n),
+                        get_i_score(psq_info, client_name, 'all_t_psq', session_n),
+                        get_i_score(ors_info, client_name, 'all_ORS', session_n)
                         ]
                 f.writelines('\t'.join(line))
                 f.writelines('\n')
@@ -464,9 +467,12 @@ def load_ors_stat_file():
                     l3_ors = attr.split('3_last_ORS_avg:')[1]
                 elif 'Change' in attr:
                     result = attr.split('Change:')[1]
+                elif 'all_ORS' in attr:
+                    all_ORS = attr.split('all_ORS:')[1]
             ors_info[dyad] = {'3_first_ORS_avg': f3_ors,
                               '3_last_ORS_avg': l3_ors,
-                              'Change': result}
+                              'Change': result,
+                              'all_ORS': all_ORS}
 
     return ors_info
 
